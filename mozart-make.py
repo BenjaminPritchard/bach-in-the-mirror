@@ -2,7 +2,7 @@
 mozart-make.py
 
 Hacked-together driver program for mozart-compile. The idea is to call mozart compile and lilypond
-to generate all the Bach inventions
+to generate all the Bach inventions.
     
 Benjamin Pritchard / Kundalini Software
 

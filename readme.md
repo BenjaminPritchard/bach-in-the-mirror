@@ -8,8 +8,8 @@ You can see Bach-In-The-Mirror in action at:
 
 # Fore more information
 
-* https://www.kundalinisoftware.com/mozart-transposition-engine/
-* https://www.kundalinisoftware.com/kundalini-piano-mirror/
+* https://www.kundalinisoftware.com/kundalini-piano-mirror
+* https://www.kundalinisoftware.com/mozart-transposition-engine/ 
 
 
 # Author
