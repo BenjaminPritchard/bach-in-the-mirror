@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+
+<script>
+
+var TOTAL_SCORES = 15;
+var Scores = new Array(TOTAL_SCORES);
+var curkey = 0;
+var DisplayingScore = false;
+
+function ScoreEntry (DisplayName, FileName, PageCount) 
+{
+	this.DisplayName  = DisplayName;
+	this.FileName 	  = FileName;
+	this.PageCount	  = PageCount;
+}  
+
+function TransposeUP()
+{
+	if (curkey != 11) {
+		curkey++;
+		DoScoreChange();
+	}
+}
+
+function TransposeDN()
+{
+	if (curkey != 0) {
+		curkey--;
+		DoScoreChange();
+	}
+}
+
+function InitScores() 
+{
+	Scores[0]  = new ScoreEntry('Invention #1',    '01', 2);			
+	Scores[1]  = new ScoreEntry('Invention #2',    '02', 2);
+	Scores[2]  = new ScoreEntry('Invention #3',    '03', 2);
+	Scores[3]  = new ScoreEntry('Invention #4',    '04', 2);
+	Scores[4]  = new ScoreEntry('Invention #5',    '05', 3);
+	Scores[5]  = new ScoreEntry('Invention #6',    '06', 2);
+	Scores[6]  = new ScoreEntry('Invention #7',    '07', 2);
+	Scores[7]  = new ScoreEntry('Invention #8',    '08', 2);
+	Scores[8]  = new ScoreEntry('Invention #9',    '09', 2);
+	Scores[9]  = new ScoreEntry('Invention #10',   '10', 2);
+	Scores[10]  = new ScoreEntry('Invention #11',  '11', 2);
+	Scores[11]  = new ScoreEntry('Invention #12',  '12', 3);
+	Scores[12]  = new ScoreEntry('Invention #13',  '13', 2);
+	Scores[13]  = new ScoreEntry('Invention #14',  '14', 3);
+	Scores[14]  = new ScoreEntry('Invention #15',  '15', 2);
+	
+	scoreDropDown = document.getElementById("score_dropdown");
+	
+	for (index=0; index<TOTAL_SCORES; index++) {
+		var option = document.createElement("option");
+  		option.text = Scores[index].DisplayName;
+  		scoreDropDown.add(option);		
+	}
+	
+	// see if we were called with a query string
+	// if so, use it to set the score / mode / transposition
+	
+	var searchParams = new URLSearchParams(location.search);
+	
+	if (searchParams.has("score") && searchParams.has("mode") && searchParams.has("key")) {
+	
+		ScoreIndex = searchParams.get("score")
+		Mode = searchParams.get("mode")
+		curkey = searchParams.get("key")
+		
+		document.getElementById("score_dropdown").selectedIndex = ScoreIndex;
+		document.getElementById("mod").selectedIndex  = Mode;
+		
+	} else {
+		// if no query string, then just default to the first score, in normal mode, w/o any transposition
+		document.getElementById("score_dropdown").selectedIndex = 0;
+		document.getElementById("mod").selectedIndex  = 0;
+		curkey = 0
+	}
+	
+	DoScoreChange();
+	
+}
+
+// when we change scores, make sure the scores are visible (in case we were showing the instructions or about screeens)
+function ChangeScore() {
+	showScores();
+	DoScoreChange();
+}
+
+function DoModeChange() {
+	DoScoreChange();
+}
+
+function DoScoreChange()
+{
+
+	document.getElementById("Autograph").innerText = "View Autograph";
+	DisplayingScore = true;
+
+	scoreDropDown = document.getElementById("score_dropdown");
+	scoreIndex = scoreDropDown.selectedIndex;
+	
+	mod = document.getElementById("mod");
+	switch (mod.value) {
+		case "0": prefix = "0_"; break;
+		case "1": prefix = "1_"; break;
+		case "2": prefix = "2_"; break;
+		case "3": prefix = "3_"; break;
+	}
+	
+	//update our URL
+	const params = new URLSearchParams(location.search);
+	params.set('score', scoreIndex);
+	params.set('mode', mod.value);
+	params.set('key', curkey);
+	window.history.replaceState({}, '', `${location.pathname}?${params}`);
+	
+	filename = Scores[scoreIndex].FileName 
+	suffix = "_" + curkey
+	extension = ".png"
+	
+	img1 = document.getElementById("img1");
+	img1.src = '' + filename + '\\' + prefix + filename + suffix + "-page1" + extension
+	
+	// hide page 2 if score has less than 2 pages
+	img2 = document.getElementById("img2");
+	if (Scores[scoreIndex].PageCount < 2) {
+		img2.style.visibility = "hidden"; 
+		img2.src = '';
+	} else {
+		img2.style.visibility = "";
+		img2.src = '' + filename + '\\' + prefix + filename + suffix + "-page2" + extension;
+	}
+	
+	// hide page 3 if score has less than 3 pages
+	img3 = document.getElementById("img3");
+	if (Scores[scoreIndex].PageCount < 3) {
+		img3.style.visibility = "hidden"; 
+		img3.src = '';
+	} else {
+		img3.style.visibility = "";
+		img3.src = '' + filename + '\\' + prefix + filename + suffix + "-page3" + extension;
+	}
+}
+
+function showAbout() {
+	document.getElementById("about").style.display = 'block';
+	document.getElementById("instructions").style.display = 'none';
+	document.getElementById("images").style.display = 'none';
+}
+
+
+function showInstructions() {
+	document.getElementById("about").style.display = 'none';
+	document.getElementById("instructions").style.display = 'block';
+	document.getElementById("images").style.display = 'none';
+}
+
+
+function showScores() {
+	document.getElementById("about").style.display = 'none';
+	document.getElementById("instructions").style.display = 'none';
+	document.getElementById("images").style.display = 'block';
+}
+
+function DisplayAutograph() {
+
+	if (!DisplayingScore) { 
+		document.getElementById("Autograph").innerText = "View Autograph";
+		DisplayingScore = true;
+		DoScoreChange();
+	} else {
+	
+		document.getElementById("Autograph").innerText = "View Score";
+		DisplayingScore = false;
+	
+		scoreDropDown = document.getElementById("score_dropdown");
+		scoreIndex = scoreDropDown.selectedIndex;
+		
+		img1.src = 'autograph\\IMSLP467846-PMLP3267-15_Inventio_Manoscritto-' + (scoreIndex * 2 + 1) + '.png';
+		img2.src = 'autograph\\IMSLP467846-PMLP3267-15_Inventio_Manoscritto-' + (scoreIndex * 2 + 2) + '.png';
+		img3.src = '';
+		
+		img1.style.visibility = "block";
+		img2.style.visibility = "block";
+		img3.style.visibility = "hidden";
+	} 
+		
+}	
+
+
+</script>
+<body onload="InitScores();">
+
+<H1>Bach-In-The-Mirror</H1>
+<a href="javascript:showAbout();">About</a>
+| 
+<a href="javascript:showInstructions();">Instructions </a>
+| 
+<a href="https://github.com/BenjaminPritchard/mozart-transposition-engine" target="_blank">Github</a>
+
+<br>
+<br>
+
+<select id="score_dropdown" onchange="ChangeScore();"></select>
+
+<select id = "mod" onchange="DoModeChange();">
+  <option value="0">Normal</option>
+  <option value="1">Left Handed Ascending</option>
+  <option value="2">Right Handed Descending</option>
+  <option value="3">Mirror Image</option>
+</select>
+
+<button onclick="TransposeUP();">Transpose Up</button>
+<button onclick="TransposeDN();">Transpose Down</button>
+<button id="Autograph" onclick="DisplayAutograph();">View Autograph</button>
+ 
+<br>
+
+<div style="display:none" id="about">
+
+<h1>About</h1>
+
+This app displays all fifteen of the 
+<a href="https://en.wikipedia.org/wiki/Inventions_and_Sinfonias_(Bach)">Two Part Inventions</a>
+by Johann Sebastian Bach, in all keys and with optional 
+symmetrical inversion in each key. 
+The scores are produced with my 
+<a href="https://www.kundalinisoftware.com/mozart-transposition-engine/">Mozart Transposition Engine</a>, 
+are typset with 
+<a href="https://lilypond.org/">GNU Lilypond</a>,
+and are designed to be used with my 
+<a href="https://www.kundalinisoftware.com/kundalini-piano-mirror/">Kundalini Piano Mirror</a>.
+<p>
+Additionally, Bach's original autograph of each invention can also be viewed for comparison.
+</p> 
+<h1>Bach's Dedication</h1>
+<blockquote>
+<i>
+"Forthright instruction, wherewith lovers of the clavier, especially those desirous of learning, 
+are shown in a clear way not only 1) to learn to play two voices clearly, but also after 
+further progress 2) to deal correctly and well with three obbligato parts, moreover at the 
+same time to obtain not only good ideas, but also to carry them out well, but most of all to 
+achieve a cantabile style of playing, and thereby to acquire a strong foretaste of composition."
+</i>
+</blockquote>
+<h1>Credits</h1>
+
+<ul>
+<li>Johann Sebastian Bach: Composition of the 15 Two Part Inventions</li>
+<li><a href="https://benjaminpritchard.org">Benjamin Pritchard</a>: 
+<a href="https://www.kundalinisoftware.com/kundalini-piano-mirror/">Kundalini Piano Mirror</a>,
+<a href="https://www.kundalinisoftware.com/mozart-transposition-engine/">Mozart Transposition Engine</a>
+<li>Jeff Covey: 
+<a href="https://www.mutopiaproject.org/">Mutopia</a>
+contributor</li>
+<li>Allen Garvin: Mutopia contributor</li>
+<li>Urs Metzger: Mutopia contributor</li>
+</ul>
+
+<button onclick="showScores();">OK</button>
+
+</div>
+
+<div style="display:none" id="instructions">
+<h1>Instructions</h1>
+
+<ul>
+
+<li>
+<h2>Acoustic Piano</h2>
+Play any of the inventions in any key by using 
+the score dropdown to select an invention, and the transpose up / down buttons to select a transposition. 
+</li>
+
+<li>
+<h2>Digital Piano</h2>
+On a digital piano equipped with the <a href="https://www.kundalinisoftware.com/kundalini-piano-mirror/">Kundalini
+Piano Mirror</a>, in addition to selecting your invention and transposition, you can also use the middle dropdown 
+to display symmetrically inverted notations. In such a case, configure the Piano Mirror to use the same mode as the
+middle dropdown, and to use the split point indicated on each invention.
+</li>
+
+</ul>
+
+<br>
+<button onclick="showScores();">OK</button>
+
+</div>
+
+<br>
+<br>
+
+<div id="images">
+
+<img id="img1" src=""></img>
+<img id="img2" src=""></img>
+<img id="img3" src=""></img>
+ 
+</div> 
+ 
+</body>
+</html>
