@@ -1,6 +1,11 @@
 """
+
+Example usage of the Mozart-Tranposition-Engine used here to produce symmetrically inverted versions
+of all 15 Bach 2 Part inventions
+
 mozart-compile.py
-    - please see the Lilypond Scores in mozart-compile-input for example input
+    - please see the Lilypond Scores in mozart-compile-input for example input files; they are 
+    slightly and are not exactly in lilypond format!!
 
 command line:
     mozart-compile /transpose=X /split=X /mode=X input_file output_file  
