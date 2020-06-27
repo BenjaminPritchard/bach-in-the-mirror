@@ -25,7 +25,7 @@ print("Written by Benjamin Pritchard / Kundalini Software")
 
 input_file_path     = "C:\\kundalini\\bach inventions\\mozart-transpose-input\\"
 output_file_path    = "C:\\kundalini\\bach inventions\\mozart-transpose-output\\tmp\\"
-edited_file_path    = "C:\kundalini\\bach inventions\\mozart-transpose-output\hand_edited\\"
+edited_file_path    = "C:\kundalini\\bach inventions\\mozart-transpose-output\\hand_edited\\"
 diff_path           = "C:\\kundalini\\bach inventions\\mozart-transpose-output\\diffs\\"
 
 orig_output_file_path = output_file_path
