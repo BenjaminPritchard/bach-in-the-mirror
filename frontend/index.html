@@ -116,12 +116,13 @@ function DoScoreChange()
 	params.set('key', curkey);
 	window.history.replaceState({}, '', `${location.pathname}?${params}`);
 	
+	dirnpath = "png/"
 	filename = Scores[scoreIndex].FileName 
 	suffix = "_" + curkey
 	extension = ".png"
 	
 	img1 = document.getElementById("img1");
-	img1.src = '' + filename + '\\' + prefix + filename + suffix + "-page1" + extension
+	img1.src = dirnpath +  prefix + filename + suffix + "-page1" + extension
 	
 	// hide page 2 if score has less than 2 pages
 	img2 = document.getElementById("img2");
@@ -130,9 +131,9 @@ function DoScoreChange()
 		img2.src = '';
 	} else {
 		img2.style.visibility = "";
-		img2.src = '' + filename + '\\' + prefix + filename + suffix + "-page2" + extension;
+		img2.src = dirnpath + prefix + filename + suffix + "-page2" + extension;
 	}
-	
+
 	// hide page 3 if score has less than 3 pages
 	img3 = document.getElementById("img3");
 	if (Scores[scoreIndex].PageCount < 3) {

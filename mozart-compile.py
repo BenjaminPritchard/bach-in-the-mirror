@@ -290,12 +290,15 @@ def tokenize(input):
     return(final_output)
 
 
-def process_one_block(list):
+def process_one_block(list, isTreble):
 
     retval = ""
 
     for line in list:
         rawinput = line.rstrip()
+        # skip lines that are octave lines; they come from the transpose function
+        if rawinput.startswith("\ottava"):
+            continue
         final_version = tokenize(rawinput)
 
         # in debug mode, we only report if the original input and our "reconstituted" output don't match...
@@ -310,10 +313,25 @@ def process_one_block(list):
                 print(t2)
         else:
             # print(final_version.strip())
+
+            tmp = final_version.strip()
+
+            if (tmp == "}\n"):
+                continue
+
+            if tmp.rfind("treble") != -1:
+                isTreble = True
+            if tmp.rfind("bass") != -1:
+                isTreble = False
+
+            tmp_octave = find_octava(tmp, isTreble)
+
             if (retval == ""):
-                retval = final_version.strip()
+                retval = to_ly_ottava(tmp_octave) + "\n"
+                retval = retval + final_version.strip()
             else:
-                retval = retval + "\n" + final_version.strip()
+                retval = retval + "\n" + to_ly_ottava(tmp_octave) + "\n"
+                retval = retval + final_version.strip()
 
     return retval
 
@@ -395,6 +413,36 @@ def to_half_step_string(num_steps):
         return "Up " + str(num_steps) + " half steps"
 
 
+def find_octava(tmp, isTreble):
+    tmp_octave = 0
+
+    if isTreble:
+        if tmp.rfind("'") != -1:
+            tmp_octave = 0
+        if tmp.rfind("''") != -1:
+            tmp_octave = 0
+        if tmp.rfind("'''") != -1:
+            tmp_octave = 1
+
+    else:
+        # finding treble notes in the bass clef
+        if tmp.rfind("'") != -1:
+            tmp_octave = 1
+        if tmp.rfind("''") != -1:
+            tmp_octave = 1
+        if tmp.rfind("'''") != -1:
+            tmp_octave = 1
+
+        if tmp.rfind(",") != -1:
+            tmp_octave = 0
+        if tmp.rfind(",,") != -1:
+            tmp_octave = -1
+        if tmp.rfind(",,,") != -1:
+            tmp_octave = -2
+
+    return tmp_octave
+
+
 # this function uses an external python script called "ly" to actually do the transposition
 # write text out to temp file, wrapped in a variable
 # insert the key sig
@@ -420,7 +468,7 @@ def transpose(text, original_key, original_mode, transposition_str, isTreble):
     # execute LY--------------------------------------------------
 
     full_command = 'python3 ' + \
-        wrap_in_quotes(ly_command) + ' ' + wrap_in_quotes('transpose ' + transposition_str) + \
+        wrap_in_quotes(ly_command) + ' ' + wrap_in_quotes('rel2abs; transpose ' + transposition_str) + \
         ' ' + wrap_in_quotes(input_file) + ' -o ' + wrap_in_quotes(output_file)
 
     # call LY on the temp file...
@@ -438,27 +486,13 @@ def transpose(text, original_key, original_mode, transposition_str, isTreble):
         while (not tmp == "}\n"):
             tmp = f.readline()
             if (not tmp == "}\n"):
+
                 if tmp.rfind("treble") != -1:
                     isTreble = True
                 if tmp.rfind("bass") != -1:
                     isTreble = False
 
-                tmp_octave = 0
-                if isTreble:
-                    if tmp.rfind(",") != -1:
-                        tmp_octave = 0
-                    if tmp.rfind("'''") != -1:
-                        tmp_octave = 1
-                    elif tmp.rfind("''") != -1:
-                        tmp_octave = 0
-                else:
-                    if tmp.rfind(",") != -1:
-                        tmp_octave = 0
-                    if tmp.rfind("''") != -1:
-                        tmp_octave = 1
-                    elif tmp.rfind("'") != -1:
-                        tmp_octave = 1
-
+                tmp_octave = find_octava(tmp, isTreble)
                 full_file = full_file + to_ly_ottava(tmp_octave) + "\n"
                 full_file = full_file + tmp
 
@@ -596,12 +630,12 @@ def print_help():
 
 
 if (len(sys.argv) == 1):
-    half_steps_to_transpose = 0
+    half_steps_to_transpose = 5
     split_point = 56
     mode = 1
 
     input_file = 'mozart-transpose-input/01.ly'
-    output_file = 'mozart-transpose-output/01.ly'
+    output_file = 'mozart-transpose-output/tmp/0_01_3_6.ly'
 else:
     if (len(sys.argv) != 6):
         print_help()
@@ -763,7 +797,7 @@ if (mode == 1):
     voice_one_block, new_key_1 = transpose(
         voice_one_block, key_1, original_key_mode, transposition_str, True)
 
-    voice_two_block = process_one_block(string_to_list(voice_one_block))
+    voice_two_block = process_one_block(string_to_list(voice_one_block), False)
 
     # in the mirror image notes that we generated, get rid of any clef changes from the original input
     voice_two_block = voice_two_block.replace("\clef \"bass\"", "")
@@ -784,11 +818,11 @@ if (mode == 2):
         key_1, original_key_mode, half_steps_to_transpose)
 
     # do our transpostions
-    voice_one_block = process_one_block(voice_two)
+    voice_one_block = process_one_block(voice_two, True)
     voice_one_block, new_key_1 = transpose(
         voice_one_block, key_1, original_key_mode, transposition_str, True)
 
-    voice_two_block = process_one_block(string_to_list(voice_one_block))
+    voice_two_block = process_one_block(string_to_list(voice_one_block), False)
 
     # in the mirror image notes that we generated, get rid of any clef changes from the original input
     voice_one_block = voice_one_block.replace("\clef \"bass\"", "")
@@ -810,11 +844,11 @@ if (mode == 3):
         key_1, original_key_mode, half_steps_to_transpose)
 
     # do our transpostions
-    voice_one_block = process_one_block(voice_two)
+    voice_one_block = process_one_block(voice_two, True)
     voice_one_block, new_key_1 = transpose(
         voice_one_block, key_1, original_key_mode, transposition_str, True)
 
-    voice_two_block = process_one_block(voice_one)
+    voice_two_block = process_one_block(voice_one, False)
     voice_two_block, new_key_2 = transpose(
         voice_two_block, key_2, original_key_mode, transposition_str, False)
 
