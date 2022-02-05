@@ -4,15 +4,16 @@ The Bach-In-The-Mirror project is an example usage of my Mozart-Transposition en
 
 You can see Bach-In-The-Mirror in action at:
 
-* https://kundalinisoftware.com/bach-in-the-mirror/
+- https://kundalinisoftware.com/bach-in-the-mirror/
 
 # Fore more information
 
-* https://www.kundalinisoftware.com/kundalini-piano-mirror
-* https://www.kundalinisoftware.com/mozart-transposition-engine/ 
-
+- https://www.kundalinisoftware.com/kundalini-piano-mirror
+- https://www.kundalinisoftware.com/mozart-transposition-engine/
 
 # Author
 
 Benjamin Pritchard / Kundalini Software
 27-June-2020
+
+![Alt](https://repobeats.axiom.co/api/embed/041f5fa9e184bf94a79bc6a0682f2161cd3bba06.svg "Repobeats analytics image")

@@ -25,7 +25,7 @@ from os import path
 
 Version_String = "1.1"
 
-input_file_path = "mozart-transpose-input/"
+input_file_path = "working/"
 output_file_path = "mozart-transpose-output/"
 png_file_path = output_file_path + "png/"
 tmp_file_path = output_file_path + "tmp/"
@@ -88,7 +88,7 @@ for f in inputfiles:
         split = 56
 
         # and each mode
-        for mode in range(1, 2):
+        for mode in range(0, 1):
 
             mozart_compile_output_file = output_file_path + "tmp/" + \
                 str(mode) + "_" + f + "_" + str(transpose) + ".ly"
