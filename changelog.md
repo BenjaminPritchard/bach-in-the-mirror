@@ -8,6 +8,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.0] - 2026-09-20
+
+### Added
+- **Multi-Worker Parallelism (`mozart-make.py`)**:
+  - Implemented concurrent task execution using a worker thread pool, enabling massive build speedups across all 12 transpositions and 15 inventions.
+  - Added `-j` / `--jobs` CLI argument for custom concurrency control.
+  - Added `-m` / `--modes` CLI argument to select mirroring modes, with all 4 modes (0=No Mirroring, 1=Left Hand Ascending, 2=Right Hand Descending, 3=Mirror Image) enabled by default.
+  - Added `-f` / `--force` CLI argument to bypass timestamp caching and force regeneration.
+  - Added dynamic processor detection via `os.cpu_count()` (no hardcoded core counts).
+  - Added synchronized, clean progress indicators `[X/180] (XX%)` with execution summary statistics.
+  - Added flexible target selection: builds all 15 inventions by default, with support for `--all` or specific invention numbers (e.g. `01 02`).
+- **Documentation & Benchmarks (`readme.md`)**:
+  - Overhauled `readme.md` with complete documentation covering bilateral keyboard symmetry, mirroring modes, build methods, architecture diagrams, and multi-core scaling benchmarks.
+- **Makefile Integration (`Makefile`)**:
+  - Added root `Makefile` supporting standard build commands (`make`, `make -j8`, `make clean`, and individual targets like `make 01`).
+  - Implemented dynamic core detection in Makefile querying `getconf _NPROCESSORS_ONLN`, `nproc`, and `sysctl -n hw.ncpu`.
+
+### Fixed
+- **Invention 09 Markup Ottava Splitting**:
+  - Fixed multiline `\markup` in `mozart-transpose-input/09.ly` that caused `mozart-compile.py` to inject `\ottava` inside markup blocks, resolving LilyPond compilation failures for Invention 09.
+
+### Verified
+- **Full Library Generation**: Successfully compiled all 15 Bach Two-Part Inventions (180 scores, 384 PNG pages) in parallel in under 45 seconds.
+
+---
+
+## [1.2.1] - 2026-09-20
+
+### Changed
+- **Driver & Build Automation (`build.sh`)**:
+  - Rewrote `build.sh` with `bash` strict mode (`set -euo pipefail`).
+  - Added automatic nuking and recreation of `mozart-transpose-output/tmp/` prior to build runs to prevent stale file conflicts.
+  - Added dynamic resolution of the Python virtual environment interpreter (`.venv/bin/python`).
+  - Added auto-creation of output directories and synchronization of rendered PNGs to `frontend/png/`.
+- **Driver Script Fixes (`mozart-make.py`)**:
+  - Switched `input_file_path` from obsolete `working/` directory to `mozart-transpose-input/`.
+  - Replaced hardcoded `python3` invocations with `sys.executable` to guarantee execution inside the virtual environment.
+  - Updated shebang to `#!/usr/bin/env python3`.
+
+---
+
 ## [1.2.0] - 2026-09-20
 
 ### Added

@@ -42,6 +42,7 @@ Examples:
 Version History:
 27-June-2020    Verison 1.0     Initial release
 26-Sept-2021    Version 1.1     cleanup; moved to linux platform; better octava handling
+20-Sept-2026    Version 2.0     refactor and exponential improvements using google gemini AI
 """
 
 Version_String = "1.1"

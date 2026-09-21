@@ -41,8 +41,7 @@ voiceOne =
    e''16[ f'' g'' as'']  bes''8[ g''16 e'']  des''!8[ c'']                | % 31
    bes'16[( as' g' as']  bes'[ des'' c'' bes']  as'[ g' f'  e')]    | % 32
    % c'8.[^\mordent\turn des16] g,4.^\downprall f8 f2.^\fermata
-   c''8.^\markup { \musicglyph #"scripts.mordent"
-   \hspace #2.0 \musicglyph #"scripts.turn" } des''16
+   c''8.^\markup { \musicglyph #"scripts.mordent" \hspace #2.0 \musicglyph #"scripts.turn" } des''16
    g'4.^\downprall f'8                                    | % 33
    f'2.^\fermata                                          | % 34
    \bar "|."
