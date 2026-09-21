@@ -1,4 +1,9 @@
 mozart-transpose-output
 dist
 frontend/png
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.vscode/
 

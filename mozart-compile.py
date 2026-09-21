@@ -6,6 +6,7 @@
 
 import sys
 import os
+import shutil
 from tempfile import mkstemp
 
 help = """Mozart-compile - Compiler for creating transposed and mirror-image scores
@@ -46,9 +47,8 @@ Version History:
 Version_String = "1.1"
 
 # this has to correspond to the location of the ly command from the package python-ly
-# this will need to be updated before this script will work!!
 # https://github.com/frescobaldi/python-ly
-ly_command = "/usr/bin/ly"
+ly_command = shutil.which("ly") or os.path.join(sys.prefix, "bin", "ly") or "/usr/bin/ly"
 
 debug_mode = False
 
@@ -297,7 +297,7 @@ def process_one_block(list, isTreble):
     for line in list:
         rawinput = line.rstrip()
         # skip lines that are octave lines; they come from the transpose function
-        if rawinput.startswith("\ottava"):
+        if rawinput.startswith("\\ottava"):
             continue
         final_version = tokenize(rawinput)
 
@@ -403,7 +403,7 @@ def to_ly_key(original_key_letter, original_key_mode):
 
 
 def to_ly_ottava(octave):
-    return "\ottava #" + str(octave)
+    return "\\ottava #" + str(octave)
 
 
 def to_half_step_string(num_steps):
@@ -467,12 +467,20 @@ def transpose(text, original_key, original_mode, transposition_str, isTreble):
 
     # execute LY--------------------------------------------------
 
-    full_command = 'python3 ' + \
-        wrap_in_quotes(ly_command) + ' ' + wrap_in_quotes('rel2abs; transpose ' + transposition_str) + \
+    if os.path.exists(ly_command):
+        ly_exec = wrap_in_quotes(sys.executable) + ' ' + wrap_in_quotes(ly_command)
+    else:
+        ly_exec = wrap_in_quotes(sys.executable) + ' -m ly'
+
+    full_command = ly_exec + ' ' + \
+        wrap_in_quotes('rel2abs; transpose ' + transposition_str) + \
         ' ' + wrap_in_quotes(input_file) + ' -o ' + wrap_in_quotes(output_file)
 
     # call LY on the temp file...
-    os.system(full_command)
+    res = os.system(full_command)
+    if res != 0:
+        print("Error: ly command failed with exit code", res)
+        sys.exit(1)
 
     # read back in file created by LY-----------------------------
 
@@ -707,7 +715,7 @@ with open(input_file) as fp:
 #     tagline           = \markup { \with-url #"https://www.kundalinisoftware.com/bach-in-the-mirror/" { www.kundalinisoftware.com/bach-in-the-mirror/ } }
 
 output_template = """
-\header{
+\\header{
     composer = \"{composer}\"
     title = \"{title}\"
     tagline = ""
@@ -729,25 +737,25 @@ voicetwo = {
     {voice_two_block}
 }
 
-\markup {
+\\markup {
   {mode_string}
 }
 
-\markup {
+\\markup {
   Transposition: {half_step_transposition}
 }
 
-\markup {
+\\markup {
   Split: {split}
 }
 
-\score {
-    \context PianoStaff <<
-        \context Staff = \"one\" << \\voiceone >>
-        \context Staff = \"two\" << \\voicetwo >>
+\\score {
+    \\context PianoStaff <<
+        \\context Staff = \"one\" << \\voiceone >>
+        \\context Staff = \"two\" << \\voicetwo >>
     >>
 
-\layout { }
+\\layout { }
 
 }
 
@@ -800,8 +808,8 @@ if (mode == 1):
     voice_two_block = process_one_block(string_to_list(voice_one_block), False)
 
     # in the mirror image notes that we generated, get rid of any clef changes from the original input
-    voice_two_block = voice_two_block.replace("\clef \"bass\"", "")
-    voice_two_block = voice_two_block.replace("\clef \"treble\"", "")
+    voice_two_block = voice_two_block.replace("\\clef \"bass\"", "")
+    voice_two_block = voice_two_block.replace("\\clef \"treble\"", "")
 
     # the transpose function above returns us the new key
     key_1 = new_key_1
@@ -825,8 +833,8 @@ if (mode == 2):
     voice_two_block = process_one_block(string_to_list(voice_one_block), False)
 
     # in the mirror image notes that we generated, get rid of any clef changes from the original input
-    voice_one_block = voice_one_block.replace("\clef \"bass\"", "")
-    voice_one_block = voice_one_block.replace("\clef \"treble\"", "")
+    voice_one_block = voice_one_block.replace("\\clef \"bass\"", "")
+    voice_one_block = voice_one_block.replace("\\clef \"treble\"", "")
 
     # the transpose function above returns us the new key
     key_1 = new_key_1
@@ -853,12 +861,12 @@ if (mode == 3):
         voice_two_block, key_2, original_key_mode, transposition_str, False)
 
     # in the mirror image notes that we generated, get rid of any clef changes from the original input
-    voice_one_block = voice_one_block.replace("\clef \"bass\"", "")
-    voice_one_block = voice_one_block.replace("\clef \"treble\"", "")
+    voice_one_block = voice_one_block.replace("\\clef \"bass\"", "")
+    voice_one_block = voice_one_block.replace("\\clef \"treble\"", "")
 
     # in the mirror image notes that we generated, get rid of any clef changes from the original input
-    voice_two_block = voice_two_block.replace("\clef \"bass\"", "")
-    voice_two_block = voice_two_block.replace("\clef \"treble\"", "")
+    voice_two_block = voice_two_block.replace("\\clef \"bass\"", "")
+    voice_two_block = voice_two_block.replace("\\clef \"treble\"", "")
 
     # the transpose function above returns us the new key
     key_1 = new_key_1
@@ -891,6 +899,10 @@ output_template = output_template.replace(
 #
 # which prevents our parsing logic from breaking the 2/3 up into tokens
 output_template = output_template.replace("@", " ")
+
+out_dir = os.path.dirname(output_file)
+if out_dir:
+    os.makedirs(out_dir, exist_ok=True)
 
 with open(output_file, "w+") as fp:
     fp.write(output_template)
