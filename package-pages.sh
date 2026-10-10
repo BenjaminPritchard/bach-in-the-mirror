@@ -88,15 +88,22 @@ git add -A -f
 TREE_ID=$(git write-tree)
 
 # Determine parent commit unless orphan mode is requested
-PARENT_ARGS=()
 if [ "$ORPHAN" = false ] && git rev-parse --verify "refs/heads/$BRANCH" >/dev/null 2>&1; then
-    PARENT_ARGS=("-p" "$(git rev-parse "refs/heads/$BRANCH")")
+    PARENT_COMMIT="$(git rev-parse "refs/heads/$BRANCH")"
+    PARENT_TREE="$(git rev-parse "$PARENT_COMMIT^{tree}")"
+    if [ "$PARENT_TREE" = "$TREE_ID" ]; then
+        echo "No changes detected in frontend/ since last package ($PARENT_COMMIT)."
+        COMMIT_ID="$PARENT_COMMIT"
+    else
+        TIMESTAMP=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
+        COMMIT_ID=$(git commit-tree "$TREE_ID" -p "$PARENT_COMMIT" -m "Deploy Bach in the Mirror frontend ($TIMESTAMP)")
+        git update-ref "refs/heads/$BRANCH" "$COMMIT_ID"
+    fi
+else
+    TIMESTAMP=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
+    COMMIT_ID=$(git commit-tree "$TREE_ID" -m "Deploy Bach in the Mirror frontend ($TIMESTAMP)")
+    git update-ref "refs/heads/$BRANCH" "$COMMIT_ID"
 fi
-
-TIMESTAMP=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
-COMMIT_ID=$(git commit-tree "$TREE_ID" "${PARENT_ARGS[@]}" -m "Deploy Bach in the Mirror frontend ($TIMESTAMP)")
-
-git update-ref "refs/heads/$BRANCH" "$COMMIT_ID"
 
 echo "------------------------------------------------------------"
 echo "Successfully packaged frontend into '$BRANCH' ($COMMIT_ID)."
@@ -105,7 +112,7 @@ echo "------------------------------------------------------------"
 
 if [ "$DO_PUSH" = true ]; then
     echo "Pushing '$BRANCH' to origin..."
-    git push origin "$BRANCH"
+    git push -u origin "$BRANCH"
     echo "Deployment complete! Live at: https://benjaminpritchard.github.io/bach-in-the-mirror/"
 else
     echo "To push to GitHub and publish to GitHub Pages, run:"

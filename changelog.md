@@ -6,6 +6,31 @@ All notable changes to the **Bach in the Mirror** (Mozart Transposition Engine) 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-10-09
+
+### Added
+- **Symmetrical Inversion Theory & Advanced Musicology (`readme.md`)**:
+  - Expanded `readme.md` with comprehensive theoretical foundations extracted from Kundalini Software's Piano Mirror platform.
+  - Documented the biomechanics and neurology of bilateral symmetry (homologous muscle pairings, motor cortex symmetry) versus the acoustic piano's linear asymmetry.
+  - Added physical keyboard geometry analysis with dual symmetry axes: White Key Axis (**D**) and Black Key Axis (**G♯ / A♭**).
+  - Added complete semitone correspondence table across the central D4 / G♯4 axis (MIDI note 50 / split point 56).
+  - Added harmonic reflection analysis across the **Circle of Fifths**, explaining why key signatures with $n$ sharps geometrically invert into key signatures with $n$ flats with exact mirror accidental patterns.
+  - Included key signature correspondence table (C ↔ C, G ↔ F, D ↔ B♭, A ↔ E♭, etc.).
+  - Added dedicated sections for all 4 mirroring modes with musical scale and chord examples.
+- **Custom LilyPond Engravings of Bach Invention No. 1 (BWV 772 mm. 1–2)**:
+  - Replaced legacy Mozart K. 382 excerpts with high-resolution, cropped engravings of J.S. Bach's Invention #1 in C Major:
+    - `docs/images/bach_invention_01_original.png` (Original, mm. 1–2).
+    - `docs/images/bach_invention_01_mirror.png` (Symmetrical Inversion, Mode 3, mm. 1–2).
+  - Added explicit fingerings (`1-2-3-4-2-3-1-5`) to both scores to visually demonstrate 1:1 physical hand and finger motion congruence between RH and LH.
+  - Provided deep contrapuntal and interval analysis showing how ascending intervals in the subject reflect into descending intervals in the mirror, and how Voice 1 / Voice 2 subject-answer entry points invert.
+- **Documentation Asset Repository (`docs/images/`)**:
+  - Imported and preserved core theoretical diagrams: `Piano-Keyboard-1.png`, `Circle-Of-Fifths.png`, `D-Chord-Right-Descending-1.png`, `DMajor_LeftAscending.png`, and `DMajor_RightAscending.png`.
+- **Institutional Grants & AI Collaboration Documentation (`readme.md`)**:
+  - Documented engine origin and funding history: originally created by Benjamin Pritchard as Version 1.0 with a **National Science Foundation (NSF)** federal grant through the **NSF I-Corps Sites Program** (Team `SU19-004`), administered by the **University of Akron Research Foundation (UARF)** at the **Bounce Innovation Hub** in Akron, OH, alongside a matching grant from the **Burton D. Morgan Foundation**.
+  - Documented Version 1.0 as a hand-crafted tokenizer and transpiler targeting GNU LilyPond and MIDI remapping for the physical Kundalini Piano hardware.
+  - Documented Version 2.0 as an AI-augmented architectural overhaul created by Benjamin Pritchard in pair programming with **Google Gemini (Google DeepMind Antigravity / Gemini 2.5 Pro)**.
+  - Integrated official high-resolution, web-optimized logo icons for both the **National Science Foundation (`docs/images/nsf_logo.png`)** and the **Burton D. Morgan Foundation (`docs/images/burton_d_morgan_logo.png`)** directly into `readme.md`.
+
 ## [2.2.0] - 2026-10-09
 
 ### Added
@@ -15,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `-p` / `--push` flag to automatically push to `origin gh-pages`.
   - Added `make pages` and `make deploy` targets in `Makefile`.
   - Added `package.json` with `npm run package` and `npm run deploy` scripts.
+- **Documentation & Screenshot (`readme.md`)**:
+  - Removed outdated Repobeats analytics embed at the top of the readme.
+  - Added high-resolution screenshot (`screenshot.png`) of the live GitHub Pages score viewer.
+  - Added dedicated GitHub Pages deployment guide and updated live web viewer links.
 
 ### Fixed & Enhanced
 - **Single-Page PNG Output Normalization (`mozart-make.py`)**:

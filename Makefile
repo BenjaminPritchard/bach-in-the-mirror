@@ -9,7 +9,7 @@
 NPROCS := $(shell getconf _NPROCESSORS_ONLN 2>/dev/null || nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 JOBS ?= $(NPROCS)
 
-.PHONY: all default clean pages deploy 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+.PHONY: all default clean pages deploy push 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
 
 # Default target builds with auto-detected parallel jobs
 default:
@@ -29,9 +29,13 @@ clean:
 pages:
 	./package-pages.sh
 
-# Package and push to origin gh-pages
+# Deploy to GitHub Pages (packages frontend into gh-pages and pushes to origin)
 deploy:
 	./package-pages.sh --push
+
+# Push existing packaged gh-pages branch to origin
+push:
+	git push -u origin gh-pages
 
 # Individual invention targets
 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15:
