@@ -66,11 +66,13 @@ flowchart TD
     subgraph Transpilation Pipeline
         Single --> Tokenizer["Tokenize & Mirror Notes"]
         Single --> LY["python-ly (Transpose & Rel2Abs)"]
-        LY --> Assembly["Score Assembly (LilyPond Template)"]
+        Single --> OctaveNorm["Octave Normalization (+1 Oct for Inverted Voices)"]
+        OctaveNorm --> Assembly["Score Assembly (LilyPond Template)"]
+        Assembly --> Beautifier["score_beautifier.py (Post-Processor)"]
     end
 
     subgraph Outputs
-        Assembly --> OutLy["mozart-transpose-output/tmp/*.ly"]
+        Beautifier --> OutLy["mozart-transpose-output/tmp/*.ly"]
         OutLy --> LP["LilyPond Compiler"]
         LP --> OutPNG["mozart-transpose-output/png/*.png"]
         OutPNG --> Web["frontend/png/ (Web Viewer)"]
@@ -80,9 +82,11 @@ flowchart TD
 ### Key Files & Directories
 
 - **[mozart-compile.py](file:///Users/benjamin/websites/pianomirror.org/ref/bach-in-mirror/bach-in-the-mirror/mozart-compile.py)**:
-  Core transpiler. Parses a two-voice input score with custom header metadata, inverts note pitch tokens across the symmetry axis, invokes `python-ly` to transpose keys and notes, and generates a formatted LilyPond score.
+  Core transpiler. Parses a two-voice input score with custom header metadata, inverts note pitch tokens across the symmetry axis, invokes `python-ly` to transpose keys and notes, applies octave normalization to inverted voices, and generates a formatted LilyPond score.
+- **[score_beautifier.py](file:///Users/benjamin/websites/pianomirror.org/ref/bach-in-mirror/bach-in-the-mirror/score_beautifier.py)**:
+  Score post-processor. Strips erratic measure-by-measure `\ottava` statements, removes duplicate ottavas, and ensures optimal piano register layout.
 - **[mozart-make.py](file:///Users/benjamin/websites/pianomirror.org/ref/bach-in-mirror/bach-in-the-mirror/mozart-make.py)**:
-  Driver script designed to batch process input files across 12 transpositions and mirroring modes, then invoke `lilypond --png` to generate score sheet images.
+  Parallel driver script designed to batch process input files across 12 transpositions and mirroring modes, run `score_beautifier`, then invoke `lilypond --png` to generate score sheet images.
 - **[mozart-transpose-input/](file:///Users/benjamin/websites/pianomirror.org/ref/bach-in-mirror/bach-in-the-mirror/mozart-transpose-input/)**:
   Input scores for Bach Inventions 1 through 15. Formatted with 5-line metadata headers (Composer, Title, Opus, Key, Time Signature) followed by LilyPond `voiceone` and `voicetwo` definitions.
 - **[mozart-transpose-output/](file:///Users/benjamin/websites/pianomirror.org/ref/bach-in-mirror/bach-in-the-mirror/mozart-transpose-output/)**:

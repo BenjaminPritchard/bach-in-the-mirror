@@ -6,6 +6,63 @@ All notable changes to the **Bach in the Mirror** (Mozart Transposition Engine) 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-10-09
+
+### Added
+- **GitHub Pages Packaging Script (`package-pages.sh`)**:
+  - Created standalone packaging script that packages the `frontend/` directory (viewer HTML, manuscript autograph scans, `.nojekyll`, and all 1,522 rendered score PNGs) into a deployment-ready `gh-pages` branch.
+  - Uses isolated git plumbing (`git write-tree`, `git commit-tree`, `git update-ref`) to package assets without switching git branches or touching the user's active working tree.
+  - Added `-p` / `--push` flag to automatically push to `origin gh-pages`.
+  - Added `make pages` and `make deploy` targets in `Makefile`.
+  - Added `package.json` with `npm run package` and `npm run deploy` scripts.
+
+### Fixed & Enhanced
+- **Single-Page PNG Output Normalization (`mozart-make.py`)**:
+  - Resolved build issue where single-page scores were never skipped on repeated `make` runs (LilyPond outputs `<file>.png` for 1-page scores rather than `<file>-page1.png`).
+  - Added automatic aliasing of `<file>.png` to `<file>-page1.png` when single-page outputs are produced or detected in cache.
+  - Ensured all 720 score targets across all 15 inventions are reliably skipped (0.05s build time) when up to date.
+  - Fixed broken image (404) rendering in `frontend/index.html` for single-page scores (such as Invention 04 in mode 2, and Invention 10 in mode 1).
+- **Web Frontend Modernization & Redesign (`frontend/index.html`)**:
+  - Completely redesigned the frontend with modern HTML5 semantics, responsive CSS custom properties, and elegant classical typography.
+  - Implemented accessible native `<dialog>` modals for "About & Bilateral Theory", "Practice & Performance Guide", and "Keyboard Shortcuts".
+  - Replaced inline JavaScript attributes with structured DOM event listeners.
+  - Added live context banner displaying resolved transposed key (e.g. `E♭ Major (+3 st)`), original key, BWV numbers, mirroring mode, and symmetry axis (Split 56).
+  - Added hands-free piano keyboard shortcuts (`←`/`→` for inventions, `↑`/`↓` for semitone transpositions, `M` for mode cycling, `A` for autograph toggle, `L` for book spread vs stacked layout, `?` for help).
+  - Added URL parameter persistence and share button with toast notification.
+  - Replaced Windows-style backslashes (`autograph\\...`) with web-standard forward slashes (`autograph/...`) for autograph scans.
+  - Fixed page 3 score image URL pathing from `'' + filename + '\\...'` to `dirnpath + ...` for 3-page inventions (Inventions 05, 12, 14).
+  - Fixed page 3 score card visibility bug where `.score-card { display: flex; }` overrode the HTML `hidden` attribute, causing a ghost 3rd card to display on 2-page scores (such as Invention 01). Added strict `[hidden], .score-card.is-hidden { display: none !important; }` enforcement.
+  - Added self-healing image loader with loading indicators that automatically hides extra page cards if a score fits on fewer pages.
+- **Stale Output Cleanup Before Rendering (`mozart-make.py`)**:
+  - Removed outdated page PNG files matching `{lilypond_output_file}*.png` prior to re-engraving to prevent stale multi-page artifacts when a score fits on fewer pages.
+- **Version Bump**:
+  - Bumped `mozart-make.py` to version 2.2.
+
+---
+
+## [2.1.0] - 2026-09-20
+
+### Added
+- **Score Beautifier Engine (`score_beautifier.py`)**:
+  - Created standalone post-processor module to clean intermediate `.ly` files before LilyPond engraving.
+  - Strips erratic, measure-by-measure `\ottava` statements, cleans stacked duplicates, and enforces clean whitespace formatting.
+  - Integrated into `mozart-make.py` worker pipeline between transpilation and image compilation.
+
+### Fixed & Enhanced
+- **Octave Normalization for Playable Symmetrical Inversion (`mozart-compile.py`)**:
+  - Resolved root causes of extreme ledger lines (up to 8 lines below the treble staff and 5 lines below the bass staff).
+  - Applied $+1$ octave transposition (`\transpose c c'`) to inverted voices, shifting inverted Voice 1 into standard Right Hand range ($A3$–$E6$) and inverted Voice 2 into standard Left Hand range ($E2$–$E4$).
+  - 100% preserved bilateral mirror fingering symmetry (interval geometries and finger motions remain exact mirror opposites).
+- **Eliminated Ottava Churn (`mozart-compile.py`)**:
+  - Removed flawed `find_octava()` line-by-line injections from `process_one_block()` and `transpose()`, terminating broken, flickering `8 - - - 1` brackets.
+- **Contextual Clef Preservation (`mozart-compile.py`)**:
+  - Preserved Bach's authentic clef shifts (e.g. `\clef "treble"` in mm. 9–12 and `\clef "bass"` in m. 13 of Invention 1) for un-inverted voices, eliminating high ledger lines in Voice 2.
+- **Version Bumps**:
+  - Updated `mozart-compile.py` and `mozart-make.py` to version 2.1.
+
+### Verified
+- **Invention 01 Full Mode & Key Matrix**: Rebuilt all 48 scores (Modes 0, 1, 2, 3 across all 12 keys) in 11.4s with 0 errors. Verified publication-quality engraving with minimal, natural ledger lines and zero erratic ottava brackets.
+
 ---
 
 ## [2.0.0] - 2026-09-20

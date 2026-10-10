@@ -9,7 +9,7 @@
 NPROCS := $(shell getconf _NPROCESSORS_ONLN 2>/dev/null || nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 JOBS ?= $(NPROCS)
 
-.PHONY: all default clean 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+.PHONY: all default clean pages deploy 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
 
 # Default target builds with auto-detected parallel jobs
 default:
@@ -24,6 +24,14 @@ clean:
 	rm -rf mozart-transpose-output/png/*
 	rm -rf frontend/png/*
 	mkdir -p mozart-transpose-output/tmp mozart-transpose-output/png frontend/png
+
+# Package frontend into gh-pages branch for GitHub Pages (github.io)
+pages:
+	./package-pages.sh
+
+# Package and push to origin gh-pages
+deploy:
+	./package-pages.sh --push
 
 # Individual invention targets
 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15:

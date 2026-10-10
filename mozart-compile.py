@@ -43,9 +43,10 @@ Version History:
 27-June-2020    Verison 1.0     Initial release
 26-Sept-2021    Version 1.1     cleanup; moved to linux platform; better octava handling
 20-Sept-2026    Version 2.0     refactor and exponential improvements using google gemini AI
+20-Sept-2026    Version 2.1     score beautification: octave normalization, clean clefs, eliminated ottava churn
 """
 
-Version_String = "1.1"
+Version_String = "2.1"
 
 # this has to correspond to the location of the ly command from the package python-ly
 # https://github.com/frescobaldi/python-ly
@@ -317,22 +318,10 @@ def process_one_block(list, isTreble):
 
             tmp = final_version.strip()
 
-            if (tmp == "}\n"):
-                continue
-
-            if tmp.rfind("treble") != -1:
-                isTreble = True
-            if tmp.rfind("bass") != -1:
-                isTreble = False
-
-            tmp_octave = find_octava(tmp, isTreble)
-
             if (retval == ""):
-                retval = to_ly_ottava(tmp_octave) + "\n"
-                retval = retval + final_version.strip()
+                retval = final_version.strip()
             else:
-                retval = retval + "\n" + to_ly_ottava(tmp_octave) + "\n"
-                retval = retval + final_version.strip()
+                retval = retval + "\n" + final_version.strip()
 
     return retval
 
@@ -495,14 +484,6 @@ def transpose(text, original_key, original_mode, transposition_str, isTreble):
         while (not tmp == "}\n"):
             tmp = f.readline()
             if (not tmp == "}\n"):
-
-                if tmp.rfind("treble") != -1:
-                    isTreble = True
-                if tmp.rfind("bass") != -1:
-                    isTreble = False
-
-                tmp_octave = find_octava(tmp, isTreble)
-                full_file = full_file + to_ly_ottava(tmp_octave) + "\n"
                 full_file = full_file + tmp
 
         new_key = new_key.strip()
@@ -728,14 +709,18 @@ voiceone = {
     {key_1}
     {time_1}
     \\clef "treble"
+    {voice_one_prefix}
     {voice_one_block}
+    {voice_one_suffix}
 }
 
 voicetwo = {
     {key_2}
     {time_2}
     \\clef "bass"
+    {voice_two_prefix}
     {voice_two_block}
+    {voice_two_suffix}
 }
 
 \\markup {
@@ -764,12 +749,17 @@ voicetwo = {
 
 split_string = str(split_point)
 
+voice_one_prefix = ""
+voice_one_suffix = ""
+voice_two_prefix = ""
+voice_two_suffix = ""
+
 # no transposition
 if (mode == 0):
     print("no mirroring")
 
     mode_string = "No Mirroring"
-    splt_string = "N/A"
+    split_string = "N/A"
 
     # two keys should be the same
     # two modes will be the same
@@ -816,6 +806,10 @@ if (mode == 1):
     key_1 = new_key_1
     key_2 = mirror_image_key(new_key_1, original_key_mode)
 
+    # Invert voice sitting in bass clef is normalized up 1 octave for optimal piano register
+    voice_two_prefix = "\\transpose c c' {"
+    voice_two_suffix = "}"
+
 # Right Hand Descending
 if (mode == 2):
 
@@ -823,15 +817,19 @@ if (mode == 2):
     key_1 = mirror_image_key(original_key_letter, original_key_mode)
     key_2 = original_key_letter
 
-    transposition_str = half_steps_to_pitch_interval_1(
+    transposition_str_1 = half_steps_to_pitch_interval_1(
         key_1, original_key_mode, half_steps_to_transpose)
 
-    # do our transpostions
+    # do our transpositions
     voice_one_block = process_one_block(voice_two, True)
     voice_one_block, new_key_1 = transpose(
-        voice_one_block, key_1, original_key_mode, transposition_str, True)
+        voice_one_block, key_1, original_key_mode, transposition_str_1, True)
 
-    voice_two_block = process_one_block(string_to_list(voice_one_block), False)
+    transposition_str_2 = half_steps_to_pitch_interval_1(
+        key_2, original_key_mode, half_steps_to_transpose)
+    voice_two_block = list_to_string(voice_two)
+    voice_two_block, new_key_2 = transpose(
+        voice_two_block, key_2, original_key_mode, transposition_str_2, False)
 
     # in the mirror image notes that we generated, get rid of any clef changes from the original input
     voice_one_block = voice_one_block.replace("\\clef \"bass\"", "")
@@ -839,7 +837,11 @@ if (mode == 2):
 
     # the transpose function above returns us the new key
     key_1 = new_key_1
-    key_2 = mirror_image_key(new_key_1, original_key_mode)
+    key_2 = new_key_2
+
+    # Invert voice sitting in treble clef is normalized up 1 octave for optimal piano register
+    voice_one_prefix = "\\transpose c c' {"
+    voice_one_suffix = "}"
 
 
 # Mirror Image
@@ -852,7 +854,7 @@ if (mode == 3):
     transposition_str = half_steps_to_pitch_interval_1(
         key_1, original_key_mode, half_steps_to_transpose)
 
-    # do our transpostions
+    # do our transpositions
     voice_one_block = process_one_block(voice_two, True)
     voice_one_block, new_key_1 = transpose(
         voice_one_block, key_1, original_key_mode, transposition_str, True)
@@ -873,6 +875,12 @@ if (mode == 3):
     key_1 = new_key_1
     key_2 = new_key_2
 
+    # Both inverted voices are normalized up 1 octave for optimal piano register
+    voice_one_prefix = "\\transpose c c' {"
+    voice_one_suffix = "}"
+    voice_two_prefix = "\\transpose c c' {"
+    voice_two_suffix = "}"
+
 output_template = output_template.replace("{composer}", composer)
 output_template = output_template.replace("{title}", title + ", " + opus)
 output_template = output_template.replace("{mode_string}", mode_string)
@@ -884,13 +892,21 @@ output_template = output_template.replace("{key_1}", to_ly_key(
     key_1, original_key_mode))               # major/minor doesn't change
 output_template = output_template.replace("{time_1}", time_1)
 output_template = output_template.replace(
+    "{voice_one_prefix}", voice_one_prefix)
+output_template = output_template.replace(
     "{voice_one_block}", voice_one_block)
+output_template = output_template.replace(
+    "{voice_one_suffix}", voice_one_suffix)
 
 output_template = output_template.replace("{key_2}", to_ly_key(
     key_2, original_key_mode))               # major/minor doesn't change
 output_template = output_template.replace("{time_2}", time_2)
 output_template = output_template.replace(
+    "{voice_two_prefix}", voice_two_prefix)
+output_template = output_template.replace(
     "{voice_two_block}", voice_two_block)
+output_template = output_template.replace(
+    "{voice_two_suffix}", voice_two_suffix)
 
 # certain things mess up our parsing logic, such as:
 #   \times 2/3

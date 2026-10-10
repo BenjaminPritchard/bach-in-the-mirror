@@ -17,16 +17,20 @@ Version History:
 27-June-2020    Version 1.0     Initial release
 26-Sept-2021    Version 1.1     Cleanup; Updated to work under Linux
 20-Sept-2026    Version 2.0     Upgraded to parallel execution engine (-j / --jobs)
+20-Sept-2026    Version 2.1     Integrated score_beautifier pipeline for clean engraving
 """
 
 import os
 import sys
+import shutil
+import glob
 import subprocess
 import argparse
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from score_beautifier import beautify_lilypond_file
 
-Version_String = "2.0"
+Version_String = "2.2"
 
 input_file_path = "mozart-transpose-input/"
 output_file_path = "mozart-transpose-output/"
@@ -69,9 +73,20 @@ def process_task(task):
         png_file_path, f"{mode}_{f}_{transpose}"
     )
     expected_png = lilypond_output_file + "-page1.png"
+    single_png = lilypond_output_file + ".png"
+
+    # LilyPond generates <file>.png for 1-page scores, but <file>-page1.png for multi-page scores.
+    # If a valid single-page score exists, normalize it by creating the -page1.png alias
+    # so that the web frontend and cache checking find it consistently.
+    if os.path.exists(single_png) and not os.path.exists(expected_png):
+        try:
+            shutil.copy2(single_png, expected_png)
+        except OSError:
+            pass
 
     # Check if target is already up-to-date
-    if not force and not shouldProcessFile(input_file, expected_png):
+    target_png = expected_png if os.path.exists(expected_png) else single_png
+    if not force and not shouldProcessFile(input_file, target_png):
         return (task, "SKIPPED", f"Invention {f} (mode={mode}, transpose={transpose}) is up to date.")
 
     # 1. Execute mozart-compile
@@ -90,7 +105,20 @@ def process_task(task):
         err_msg = res.stderr.strip() or res.stdout.strip()
         return (task, "ERROR", f"mozart-compile failed for {f} (mode={mode}, transpose={transpose}):\n{err_msg}")
 
+    # 1.5 Beautify LilyPond score
+    try:
+        beautify_lilypond_file(mozart_compile_output_file, mode=mode)
+    except Exception as e:
+        return (task, "ERROR", f"score_beautifier failed for {f} (mode={mode}, transpose={transpose}):\n{e}")
+
     # 2. Execute lilypond
+    # Clean up stale rendered PNG artifacts for this specific score before re-rendering
+    for old_file in glob.glob(lilypond_output_file + "*.png"):
+        try:
+            os.remove(old_file)
+        except OSError:
+            pass
+
     lilypond_cmd = [
         "lilypond",
         "--png",
@@ -103,6 +131,14 @@ def process_task(task):
     if res.returncode != 0:
         err_msg = res.stderr.strip() or res.stdout.strip()
         return (task, "ERROR", f"lilypond failed for {f} (mode={mode}, transpose={transpose}):\n{err_msg}")
+
+    # If LilyPond produced a single-page output (<file>.png), create the <file>-page1.png alias
+    # required by the frontend viewer
+    if os.path.exists(single_png) and not os.path.exists(expected_png):
+        try:
+            shutil.copy2(single_png, expected_png)
+        except OSError as e:
+            return (task, "ERROR", f"failed to copy single-page PNG for {f}: {e}")
 
     return (task, "OK", f"Invention {f} (mode={mode}, transpose={transpose}) generated successfully.")
 
