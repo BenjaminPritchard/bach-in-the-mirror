@@ -1,305 +1,1372 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Johann Sebastian Bach's 15 Two-Part Inventions (BWV 772–786) in Symmetrical Mirror Inversions and all 12 musical keys. Bilateral keyboard symmetry score viewer.">
+  <meta name="theme-color" content="#1a1c23">
+  <title>Bach in the Mirror — Symmetrical Inversions of the 15 Two-Part Inventions</title>
 
-<script>
+  <style>
+    :root {
+      --font-serif: "Playfair Display", "Georgia", "Cambria", "Times New Roman", serif;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 
-var TOTAL_SCORES = 15;
-var Scores = new Array(TOTAL_SCORES);
-var curkey = 0;
-var DisplayingScore = false;
+      --bg-page: #f5f3ec;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #faf8f3;
+      --bg-header: #1f232b;
+      --header-text: #f8fafc;
+      --header-subtext: #94a3b8;
 
-function ScoreEntry (DisplayName, FileName, PageCount) 
-{
-	this.DisplayName  = DisplayName;
-	this.FileName 	  = FileName;
-	this.PageCount	  = PageCount;
-}  
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
 
-function TransposeUP()
-{
-	if (curkey != 11) {
-		curkey++;
-		DoScoreChange();
-	}
-}
+      --border-color: rgba(148, 163, 184, 0.25);
+      --border-dark: rgba(0, 0, 0, 0.08);
 
-function TransposeDN()
-{
-	if (curkey != 0) {
-		curkey--;
-		DoScoreChange();
-	}
-}
+      --color-primary: #8b5cf6;
+      --color-primary-dark: #6d28d9;
+      --color-accent: #d97706;
+      --color-accent-soft: rgba(217, 119, 6, 0.12);
+      --color-info: #0284c7;
 
-function InitScores() 
-{
-	Scores[0]  = new ScoreEntry('Invention #1',    '01', 2);			
-	Scores[1]  = new ScoreEntry('Invention #2',    '02', 2);
-	Scores[2]  = new ScoreEntry('Invention #3',    '03', 2);
-	Scores[3]  = new ScoreEntry('Invention #4',    '04', 2);
-	Scores[4]  = new ScoreEntry('Invention #5',    '05', 3);
-	Scores[5]  = new ScoreEntry('Invention #6',    '06', 2);
-	Scores[6]  = new ScoreEntry('Invention #7',    '07', 2);
-	Scores[7]  = new ScoreEntry('Invention #8',    '08', 2);
-	Scores[8]  = new ScoreEntry('Invention #9',    '09', 2);
-	Scores[9]  = new ScoreEntry('Invention #10',   '10', 2);
-	Scores[10]  = new ScoreEntry('Invention #11',  '11', 2);
-	Scores[11]  = new ScoreEntry('Invention #12',  '12', 3);
-	Scores[12]  = new ScoreEntry('Invention #13',  '13', 2);
-	Scores[13]  = new ScoreEntry('Invention #14',  '14', 3);
-	Scores[14]  = new ScoreEntry('Invention #15',  '15', 2);
-	
-	scoreDropDown = document.getElementById("score_dropdown");
-	
-	for (index=0; index<TOTAL_SCORES; index++) {
-		var option = document.createElement("option");
-  		option.text = Scores[index].DisplayName;
-  		scoreDropDown.add(option);		
-	}
-	
-	// see if we were called with a query string
-	// if so, use it to set the score / mode / transposition
-	
-	var searchParams = new URLSearchParams(location.search);
-	
-	if (searchParams.has("score") && searchParams.has("mode") && searchParams.has("key")) {
-	
-		ScoreIndex = searchParams.get("score")
-		Mode = searchParams.get("mode")
-		curkey = searchParams.get("key")
-		
-		document.getElementById("score_dropdown").selectedIndex = ScoreIndex;
-		document.getElementById("mod").selectedIndex  = Mode;
-		
-	} else {
-		// if no query string, then just default to the first score, in normal mode, w/o any transposition
-		document.getElementById("score_dropdown").selectedIndex = 0;
-		document.getElementById("mod").selectedIndex  = 0;
-		curkey = 0
-	}
-	
-	DoScoreChange();
-	
-}
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+      --shadow-sheet: 0 8px 30px rgba(0, 0, 0, 0.09), 0 1px 3px rgba(0, 0, 0, 0.05);
 
-// when we change scores, make sure the scores are visible (in case we were showing the instructions or about screeens)
-function ChangeScore() {
-	showScores();
-	DoScoreChange();
-}
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+    }
 
-function DoModeChange() {
-	DoScoreChange();
-}
+    /* Reset & Base Styles */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-function DoScoreChange()
-{
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
 
-	document.getElementById("Autograph").innerText = "View Autograph";
-	DisplayingScore = true;
+    /* Top App Header */
+    header.app-header {
+      background-color: var(--bg-header);
+      color: var(--header-text);
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: var(--shadow-md);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
 
-	scoreDropDown = document.getElementById("score_dropdown");
-	scoreIndex = scoreDropDown.selectedIndex;
-	
-	mod = document.getElementById("mod");
-	switch (mod.value) {
-		case "0": prefix = "0_"; break;
-		case "1": prefix = "1_"; break;
-		case "2": prefix = "2_"; break;
-		case "3": prefix = "3_"; break;
-	}
-	
-	//update our URL
-	const params = new URLSearchParams(location.search);
-	params.set('score', scoreIndex);
-	params.set('mode', mod.value);
-	params.set('key', curkey);
-	window.history.replaceState({}, '', `${location.pathname}?${params}`);
-	
-	dirnpath = "png/"
-	filename = Scores[scoreIndex].FileName 
-	suffix = "_" + curkey
-	extension = ".png"
-	
-	img1 = document.getElementById("img1");
-	img1.src = dirnpath +  prefix + filename + suffix + "-page1" + extension
-	
-	// hide page 2 if score has less than 2 pages
-	img2 = document.getElementById("img2");
-	if (Scores[scoreIndex].PageCount < 2) {
-		img2.style.visibility = "hidden"; 
-		img2.src = '';
-	} else {
-		img2.style.visibility = "";
-		img2.src = dirnpath + prefix + filename + suffix + "-page2" + extension;
-	}
+    .header-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
 
-	// hide page 3 if score has less than 3 pages
-	img3 = document.getElementById("img3");
-	if (Scores[scoreIndex].PageCount < 3) {
-		img3.style.visibility = "hidden"; 
-		img3.src = '';
-	} else {
-		img3.style.visibility = "";
-		img3.src = dirnpath + prefix + filename + suffix + "-page3" + extension;
-	}
-}
+    .branding {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
 
-function showAbout() {
-	document.getElementById("about").style.display = 'block';
-	document.getElementById("instructions").style.display = 'none';
-	document.getElementById("images").style.display = 'none';
-}
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #a78bfa, #8b5cf6, #d97706);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+      flex-shrink: 0;
+    }
 
+    .brand-icon svg {
+      width: 26px;
+      height: 26px;
+      color: #ffffff;
+    }
 
-function showInstructions() {
-	document.getElementById("about").style.display = 'none';
-	document.getElementById("instructions").style.display = 'block';
-	document.getElementById("images").style.display = 'none';
-}
+    .brand-titles h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.2rem, 1rem + 1vw, 1.65rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      color: #ffffff;
+    }
 
+    .brand-titles p {
+      font-size: 0.8rem;
+      color: var(--header-subtext);
+      font-weight: 400;
+    }
 
-function showScores() {
-	document.getElementById("about").style.display = 'none';
-	document.getElementById("instructions").style.display = 'none';
-	document.getElementById("images").style.display = 'block';
-}
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
 
-function DisplayAutograph() {
+    .btn-nav {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.825rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease-in-out;
+      text-decoration: none;
+    }
 
-	if (!DisplayingScore) { 
-		document.getElementById("Autograph").innerText = "View Autograph";
-		DisplayingScore = true;
-		DoScoreChange();
-	} else {
-	
-		document.getElementById("Autograph").innerText = "View Score";
-		DisplayingScore = false;
-	
-		scoreDropDown = document.getElementById("score_dropdown");
-		scoreIndex = scoreDropDown.selectedIndex;
-		
-		img1.src = 'autograph/IMSLP467846-PMLP3267-15_Inventio_Manoscritto-' + (scoreIndex * 2 + 1) + '.png';
-		img2.src = 'autograph/IMSLP467846-PMLP3267-15_Inventio_Manoscritto-' + (scoreIndex * 2 + 2) + '.png';
-		img3.src = '';
-		
-		img1.style.visibility = "block";
-		img2.style.visibility = "block";
-		img3.style.visibility = "hidden";
-	} 
-		
-}	
+    .btn-nav:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
 
+    .btn-nav:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
 
-</script>
-<body onload="InitScores();">
+    /* Main App Area */
+    main.app-main {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
 
-<H1>Bach-In-The-Mirror</H1>
-<a href="javascript:showAbout();">About</a>
-| 
-<a href="javascript:showInstructions();">Instructions </a>
-| 
-<a href="https://github.com/BenjaminPritchard/bach-in-the-mirror/" target="_blank">Github</a>
+    /* Toolbar Control Panel */
+    .control-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
 
-<br>
-<br>
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      align-items: end;
+    }
 
-<select id="score_dropdown" onchange="ChangeScore();"></select>
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
 
-<select id = "mod" onchange="DoModeChange();">
-  <option value="0">Normal</option>
-  <option value="1">Left Handed Ascending</option>
-  <option value="2">Right Handed Descending</option>
-  <option value="3">Mirror Image</option>
-</select>
+    .control-label {
+      font-size: 0.775rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
 
-<button onclick="TransposeUP();">Transpose Up</button>
-<button onclick="TransposeDN();">Transpose Down</button>
-<button id="Autograph" onclick="DisplayAutograph();">View Autograph</button>
- 
-<br>
+    .select-wrapper {
+      position: relative;
+    }
 
-<div style="display:none" id="about">
+    select.app-select {
+      width: 100%;
+      background-color: var(--bg-surface-elevated);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.65rem 2.2rem 0.65rem 0.85rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      appearance: none;
+      cursor: pointer;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
 
-<h1>About</h1>
+    select.app-select:focus-visible {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+    }
 
-This app displays all fifteen of the 
-<a href="https://en.wikipedia.org/wiki/Inventions_and_Sinfonias_(Bach)">Two Part Inventions</a>
-by Johann Sebastian Bach, in all keys and with optional 
-symmetrical inversion in each key. 
-The scores are produced with my 
-<a href="https://www.kundalinisoftware.com/mozart-transposition-engine/">Mozart Transposition Engine</a>, 
-are typset with 
-<a href="https://lilypond.org/">GNU Lilypond</a>,
-and are designed to be used with my 
-<a href="https://www.kundalinisoftware.com/kundalini-piano-mirror/">Kundalini Piano Mirror</a>.
-<p>
-Additionally, Bach's original autograph of each invention can also be viewed for comparison.
-</p> 
-<h1>Bach's Dedication</h1>
-<blockquote>
-<i>
-"Forthright instruction, wherewith lovers of the clavier, especially those desirous of learning, 
-are shown in a clear way not only 1) to learn to play two voices clearly, but also after 
-further progress 2) to deal correctly and well with three obbligato parts, moreover at the 
-same time to obtain not only good ideas, but also to carry them out well, but most of all to 
-achieve a cantabile style of playing, and thereby to acquire a strong foretaste of composition."
-</i>
-</blockquote>
-<h1>Credits</h1>
+    .select-wrapper::after {
+      content: "";
+      position: absolute;
+      right: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid var(--text-muted);
+      pointer-events: none;
+    }
 
-<ul>
-<li>Johann Sebastian Bach: Composition of the 15 Two Part Inventions</li>
-<li><a href="https://benjaminpritchard.org">Benjamin Pritchard</a>: 
-<a href="https://www.kundalinisoftware.com/kundalini-piano-mirror/">Kundalini Piano Mirror</a>,
-<a href="https://www.kundalinisoftware.com/mozart-transposition-engine/">Mozart Transposition Engine</a>
-<li>Jeff Covey: 
-<a href="https://www.mutopiaproject.org/">Mutopia</a>
-contributor</li>
-<li>Allen Garvin: Mutopia contributor</li>
-<li>Urs Metzger: Mutopia contributor</li>
-</ul>
+    /* Button Groups & Steppers */
+    .button-stepper {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.25rem;
+    }
 
-<button onclick="showScores();">OK</button>
+    .btn-step {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
 
-</div>
+    .btn-step:hover:not(:disabled) {
+      background: rgba(0, 0, 0, 0.06);
+    }
 
-<div style="display:none" id="instructions">
-<h1>Instructions</h1>
+    .btn-step:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
 
-<ul>
+    .stepper-display {
+      flex: 1;
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-main);
+      padding: 0 0.5rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-<li>
-<h2>Acoustic Piano</h2>
-Play any of the inventions in any key by using 
-the score dropdown to select an invention, and the transpose up / down buttons to select a transposition. 
-</li>
+    .btn-pill {
+      background: var(--bg-surface-elevated);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.65rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
+      height: 42px;
+    }
 
-<li>
-<h2>Digital Piano</h2>
-On a digital piano equipped with the <a href="https://www.kundalinisoftware.com/kundalini-piano-mirror/">Kundalini
-Piano Mirror</a>, in addition to selecting your invention and transposition, you can also use the middle dropdown 
-to display symmetrically inverted notations. In such a case, configure the Piano Mirror to use the same mode as the
-middle dropdown, and to use the split point indicated on each invention.
-</li>
+    .btn-pill:hover {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.18);
+    }
 
-</ul>
+    .btn-pill.active {
+      background: var(--color-primary);
+      color: #ffffff;
+      border-color: var(--color-primary-dark);
+      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+    }
 
-<br>
-<button onclick="showScores();">OK</button>
+    .btn-pill:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
 
-</div>
+    /* Context Info Strip */
+    .info-strip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
 
-<br>
-<br>
+    .status-tags {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
 
-<div id="images">
+    .status-tag {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.775rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
 
-<img id="img1" src=""></img>
-<img id="img2" src=""></img>
-<img id="img3" src=""></img>
- 
-</div> 
- 
+    .status-tag.accent {
+      background: var(--color-accent-soft);
+      border-color: rgba(217, 119, 6, 0.3);
+      color: #b45309;
+    }
+
+    .status-tag.purple {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: rgba(139, 92, 246, 0.25);
+      color: #7c3aed;
+    }
+
+    .layout-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Score Sheets Viewer Container */
+    .scores-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .scores-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      justify-items: center;
+    }
+
+    /* Side by side layout for wide screens */
+    .scores-grid.spread-layout {
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      align-items: start;
+    }
+
+    .score-card {
+      background: #ffffff;
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sheet);
+      overflow: hidden;
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .score-card-header {
+      background: #faf8f5;
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .score-card-header span.badge {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .score-card-body {
+      padding: 0.5rem;
+      background: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 400px;
+      position: relative;
+    }
+
+    .score-img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
+      user-select: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .score-card.loading .score-img {
+      opacity: 0.3;
+    }
+
+    .score-card.loading::after {
+      content: "Loading score page...";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* Modal Dialogs */
+    dialog.app-dialog {
+      margin: auto;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: var(--radius-lg);
+      padding: 0;
+      max-width: 720px;
+      width: calc(100% - 2rem);
+      max-height: 85dvh;
+      background: #ffffff;
+      color: var(--text-main);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+    }
+
+    dialog.app-dialog::backdrop {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+    }
+
+    .dialog-header {
+      background: var(--bg-header);
+      color: #ffffff;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dialog-header h2 {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .btn-close-dialog {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+      border-radius: var(--radius-sm);
+      padding: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease;
+    }
+
+    .btn-close-dialog:hover {
+      color: #ffffff;
+    }
+
+    .dialog-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      max-height: calc(85dvh - 120px);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .dialog-body h3 {
+      font-family: var(--font-serif);
+      font-size: 1.15rem;
+      margin: 1.25rem 0 0.5rem;
+      color: var(--text-main);
+    }
+
+    .dialog-body h3:first-child {
+      margin-top: 0;
+    }
+
+    .dialog-body p {
+      margin-bottom: 0.85rem;
+      color: #334155;
+    }
+
+    .dialog-body blockquote {
+      border-left: 4px solid var(--color-accent);
+      background: var(--color-accent-soft);
+      padding: 0.85rem 1.25rem;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      margin: 1rem 0;
+      font-style: italic;
+      color: #78350f;
+    }
+
+    .dialog-body ul {
+      margin: 0.5rem 0 1rem 1.25rem;
+      color: #334155;
+    }
+
+    .dialog-body li {
+      margin-bottom: 0.4rem;
+    }
+
+    .dialog-footer {
+      padding: 1rem 1.5rem;
+      background: #f8fafc;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* Shortcut Keys Table */
+    .keys-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.75rem;
+    }
+
+    .keys-table th, .keys-table td {
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .keys-table th {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    kbd {
+      background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 0.15rem 0.45rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #1e293b;
+      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: #1e293b;
+      color: #ffffff;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Footer */
+    footer.app-footer {
+      margin-top: auto;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-color);
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 0.825rem;
+      color: var(--text-muted);
+    }
+
+    footer.app-footer a {
+      color: var(--color-primary-dark);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    footer.app-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .header-nav {
+        justify-content: flex-start;
+      }
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+      .info-strip {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="branding">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            <path d="M2 12h20"></path>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1>Bach in the Mirror</h1>
+          <p>Symmetrical Mirror Inversions · J.S. Bach's 15 Two-Part Inventions (BWV 772–786)</p>
+        </div>
+      </div>
+
+      <nav class="header-nav" aria-label="Main Navigation">
+        <button id="btn-about" class="btn-nav" type="button" aria-haspopup="dialog">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          About &amp; Theory
+        </button>
+        <button id="btn-instructions" class="btn-nav" type="button" aria-haspopup="dialog">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+          Practice Guide
+        </button>
+        <button id="btn-shortcuts" class="btn-nav" type="button" aria-haspopup="dialog">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"></path></svg>
+          Shortcuts
+        </button>
+        <button id="btn-share" class="btn-nav" type="button" title="Copy shareable link">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          Share
+        </button>
+        <a href="https://github.com/BenjaminPritchard/bach-in-the-mirror/" class="btn-nav" target="_blank" rel="noopener noreferrer">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+          GitHub
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="app-main">
+
+    <!-- Interactive Control Panel -->
+    <section class="control-panel" aria-label="Score Configuration Controls">
+      <div class="controls-grid">
+
+        <!-- Invention Select -->
+        <div class="control-group">
+          <label for="score-dropdown" class="control-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            Invention
+          </label>
+          <div class="select-wrapper">
+            <select id="score-dropdown" class="app-select"></select>
+          </div>
+        </div>
+
+        <!-- Mirroring Mode Select -->
+        <div class="control-group">
+          <label for="mode-dropdown" class="control-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+            Mirroring Mode
+          </label>
+          <div class="select-wrapper">
+            <select id="mode-dropdown" class="app-select">
+              <option value="0">Normal (Original Bach)</option>
+              <option value="1">Mode 1: Left Hand Inverted (LH Ascending)</option>
+              <option value="2">Mode 2: Right Hand Inverted (RH Descending)</option>
+              <option value="3">Mode 3: Symmetrical Mirror Image (Both Inverted)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Transposition Stepper -->
+        <div class="control-group">
+          <span class="control-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
+            Transposition
+          </span>
+          <div class="button-stepper">
+            <button id="btn-transpose-dn" class="btn-step" type="button" title="Transpose Down 1 Semitone" aria-label="Transpose Down">−</button>
+            <div id="key-display" class="stepper-display">C Major (Original)</div>
+            <button id="btn-transpose-up" class="btn-step" type="button" title="Transpose Up 1 Semitone" aria-label="Transpose Up">+</button>
+          </div>
+        </div>
+
+        <!-- Autograph Toggle Button -->
+        <div class="control-group">
+          <span class="control-label">Score View</span>
+          <button id="btn-autograph-toggle" class="btn-pill" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <span id="autograph-label">View Autograph Manuscript</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Live Context Status Strip -->
+      <div class="info-strip">
+        <div class="status-tags">
+          <span id="tag-invention" class="status-tag">Invention No. 1</span>
+          <span id="tag-mode" class="status-tag accent">Normal</span>
+          <span id="tag-key" class="status-tag purple">Key: C Major</span>
+          <span class="status-tag">Axis: D4 / A♭4 (Split 56)</span>
+        </div>
+        <div class="layout-controls">
+          <button id="btn-layout-toggle" class="btn-nav" type="button" title="Toggle Side-by-Side vs Stacked Layout" style="color: var(--text-main); background: var(--bg-surface-elevated); border-color: var(--border-color);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="12" y1="3" x2="12" y2="21"></line></svg>
+            <span id="layout-label">Side-by-Side Layout</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Score Sheets Display Section -->
+    <section class="scores-section" aria-label="Rendered Musical Score Pages">
+      <div id="scores-grid" class="scores-grid spread-layout">
+
+        <!-- Page 1 Card -->
+        <article id="card-page1" class="score-card">
+          <header class="score-card-header">
+            <span id="header-page1">Page 1</span>
+            <span class="badge">LilyPond Engraving</span>
+          </header>
+          <div class="score-card-body">
+            <img id="img-page1" class="score-img" alt="Invention Score Page 1" loading="lazy">
+          </div>
+        </article>
+
+        <!-- Page 2 Card -->
+        <article id="card-page2" class="score-card">
+          <header class="score-card-header">
+            <span id="header-page2">Page 2</span>
+            <span class="badge">LilyPond Engraving</span>
+          </header>
+          <div class="score-card-body">
+            <img id="img-page2" class="score-img" alt="Invention Score Page 2" loading="lazy">
+          </div>
+        </article>
+
+        <!-- Page 3 Card -->
+        <article id="card-page3" class="score-card" hidden>
+          <header class="score-card-header">
+            <span id="header-page3">Page 3</span>
+            <span class="badge">LilyPond Engraving</span>
+          </header>
+          <div class="score-card-body">
+            <img id="img-page3" class="score-img" alt="Invention Score Page 3" loading="lazy">
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- About & Theory Modal Dialog -->
+  <dialog id="about-dialog" class="app-dialog">
+    <div class="dialog-header">
+      <h2>About Bach in the Mirror</h2>
+      <button class="btn-close-dialog" data-close="about-dialog" aria-label="Close dialog">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <h3>The Musical Concept: Bilateral Keyboard Symmetry</h3>
+      <p>
+        The human body possesses <strong>bilateral symmetry</strong>: our hands are physical mirror reflections of one another (thumbs inward, pinkies outward). In contrast, the traditional piano keyboard is strictly linear (frequencies ascend toward the right for both hands).
+      </p>
+      <p>
+        In <strong>Symmetrical Inversion</strong>, the keyboard is reflected across a geometric symmetry axis—traditionally centered around <strong>D</strong> or <strong>A♭ / G♯</strong>, where the acoustic piano's black and white key arrangements are naturally symmetrical:
+      </p>
+      <ul>
+        <li>When one hand ascends, the opposing hand descends in exact mirror pitch intervals and physical gestures.</li>
+        <li>Fingerings become <strong>1:1 identical</strong> between hands: Thumb mirrors Thumb, Index mirrors Index, Pinky mirrors Pinky.</li>
+        <li>Practicing symmetrically inverted scores develops bilateral motor balance, unlocks equal dexterity across non-dominant hands, and synchronizes neuro-muscular pathways across cerebral hemispheres.</li>
+      </ul>
+
+      <h3>The Four Mirroring Modes</h3>
+      <ul>
+        <li><strong>Mode 0 (Normal)</strong>: Johann Sebastian Bach's original two-part counterpoint, available transposed across all 12 musical keys.</li>
+        <li><strong>Mode 1 (Left Hand Inverted)</strong>: Voice 1 (Right Hand) remains authentic, while Voice 2 (Left Hand) is inverted across the D/A♭ axis (physical mirror ascent).</li>
+        <li><strong>Mode 2 (Right Hand Inverted)</strong>: Voice 1 (Right Hand) is inverted across the axis (physical mirror descent), while Voice 2 (Left Hand) remains authentic.</li>
+        <li><strong>Mode 3 (Full Symmetrical Mirror)</strong>: Both voices are inverted simultaneously, rendering the entire invention into a complete bilateral mirror reflection.</li>
+      </ul>
+
+      <h3>Bach's Dedication (1723)</h3>
+      <blockquote>
+        "Forthright instruction, wherewith lovers of the clavier, especially those desirous of learning, are shown in a clear way not only 1) to learn to play two voices clearly, but also after further progress 2) to deal correctly and well with three obbligato parts, moreover at the same time to obtain not only good ideas, but also to carry them out well, but most of all to achieve a cantabile style of playing, and thereby to acquire a strong foretaste of composition."
+      </blockquote>
+
+      <h3>Credits &amp; Technology</h3>
+      <p>
+        Engineered by <strong>Benjamin Pritchard</strong> (<a href="https://www.kundalinisoftware.com" target="_blank" rel="noopener">Kundalini Software</a>) as an application of the Mozart Transposition Engine. Typeset with GNU LilyPond and Python. Autograph manuscripts provided via IMSLP / Staatsbibliothek zu Berlin.
+      </p>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn-pill" data-close="about-dialog" type="button">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Practice Guide Dialog -->
+  <dialog id="instructions-dialog" class="app-dialog">
+    <div class="dialog-header">
+      <h2>Practice &amp; Performance Guide</h2>
+      <button class="btn-close-dialog" data-close="instructions-dialog" aria-label="Close dialog">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <h3>1. Playing on an Acoustic Piano</h3>
+      <p>
+        Select any invention and transposition key. When practicing an inverted mode (Modes 1, 2, or 3), read the inverted staff directly. Notice how your hand motions intuitively mirror the opposite hand. This builds geometric interval recognition and frees your technique from linear keyboard bias.
+      </p>
+
+      <h3>2. Playing with a Digital Piano (Piano Mirror)</h3>
+      <p>
+        On a digital piano paired with the <a href="https://pianomirror.org" target="_blank" rel="noopener">Kundalini Piano Mirror (pianomirror.org)</a> or hardware WebMIDI inverter:
+      </p>
+      <ul>
+        <li>Set the digital inverter's mode to match your chosen score mode (Mode 1, 2, or 3).</li>
+        <li>Set the split point to <strong>56</strong> (G♯4/A♭4) or <strong>50</strong> (D4) as indicated in the status banner.</li>
+        <li>Your hands will physically perform the mirror movements while the synthesizer outputs the normal acoustic pitches—giving you full neuro-muscular symmetry with familiar auditory feedback!</li>
+      </ul>
+
+      <h3>3. 12-Key Harmonic Transposition</h3>
+      <p>
+        Use the <strong>+</strong> and <strong>−</strong> transposition buttons (or <kbd>↑</kbd> and <kbd>↓</kbd> keys) to cycle through all 12 chromatic keys. Practicing Bach's inventions through all 12 keys develops profound keyboard topography familiarity and ear mastery.
+      </p>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn-pill" data-close="instructions-dialog" type="button">Got it</button>
+    </div>
+  </dialog>
+
+  <!-- Keyboard Shortcuts Dialog -->
+  <dialog id="shortcuts-dialog" class="app-dialog">
+    <div class="dialog-header">
+      <h2>Keyboard Shortcuts</h2>
+      <button class="btn-close-dialog" data-close="shortcuts-dialog" aria-label="Close dialog">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <p>Control the score viewer hands-free at the piano using these shortcuts:</p>
+      <table class="keys-table">
+        <thead>
+          <tr>
+            <th>Shortcut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><kbd>→</kbd> / <kbd>]</kbd></td>
+            <td>Next Invention</td>
+          </tr>
+          <tr>
+            <td><kbd>←</kbd> / <kbd>[</kbd></td>
+            <td>Previous Invention</td>
+          </tr>
+          <tr>
+            <td><kbd>↑</kbd> / <kbd>+</kbd></td>
+            <td>Transpose Up 1 Semitone</td>
+          </tr>
+          <tr>
+            <td><kbd>↓</kbd> / <kbd>−</kbd></td>
+            <td>Transpose Down 1 Semitone</td>
+          </tr>
+          <tr>
+            <td><kbd>M</kbd></td>
+            <td>Cycle Mirroring Mode (0 → 1 → 2 → 3)</td>
+          </tr>
+          <tr>
+            <td><kbd>A</kbd></td>
+            <td>Toggle Autograph Manuscript vs Score</td>
+          </tr>
+          <tr>
+            <td><kbd>L</kbd></td>
+            <td>Toggle Side-by-Side vs Stacked Layout</td>
+          </tr>
+          <tr>
+            <td><kbd>?</kbd></td>
+            <td>Show this shortcuts menu</td>
+          </tr>
+          <tr>
+            <td><kbd>Esc</kbd></td>
+            <td>Close open dialog modal</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn-pill" data-close="shortcuts-dialog" type="button">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toast-message">Link copied to clipboard!</span>
+  </div>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <p>
+      <strong>Bach in the Mirror</strong> · Produced with the Mozart Transposition Engine &amp; GNU LilyPond.
+    </p>
+    <p style="margin-top: 0.35rem;">
+      Companion engine for <a href="https://pianomirror.org" target="_blank" rel="noopener">pianomirror.org</a> · Created by <a href="https://benjaminpritchard.org" target="_blank" rel="noopener">Benjamin Pritchard</a> (<a href="https://www.kundalinisoftware.com" target="_blank" rel="noopener">Kundalini Software</a>).
+    </p>
+  </footer>
+
+  <script>
+    (function () {
+      "use strict";
+
+      // 15 Inventions Database with authentic keys and BWV catalog numbers
+      const INVENTIONS = [
+        { id: "01", bwv: "772", name: "Invention No. 1", keyName: "C Major", tonic: 0, isMinor: false, pages: 2 },
+        { id: "02", bwv: "773", name: "Invention No. 2", keyName: "C Minor", tonic: 0, isMinor: true, pages: 2 },
+        { id: "03", bwv: "774", name: "Invention No. 3", keyName: "D Major", tonic: 2, isMinor: false, pages: 2 },
+        { id: "04", bwv: "775", name: "Invention No. 4", keyName: "D Minor", tonic: 2, isMinor: true, pages: 2 },
+        { id: "05", bwv: "776", name: "Invention No. 5", keyName: "E♭ Major", tonic: 3, isMinor: false, pages: 3 },
+        { id: "06", bwv: "777", name: "Invention No. 6", keyName: "E Major", tonic: 4, isMinor: false, pages: 2 },
+        { id: "07", bwv: "778", name: "Invention No. 7", keyName: "E Minor", tonic: 4, isMinor: true, pages: 2 },
+        { id: "08", bwv: "779", name: "Invention No. 8", keyName: "F Major", tonic: 5, isMinor: false, pages: 2 },
+        { id: "09", bwv: "780", name: "Invention No. 9", keyName: "F Minor", tonic: 5, isMinor: true, pages: 2 },
+        { id: "10", bwv: "781", name: "Invention No. 10", keyName: "G Major", tonic: 7, isMinor: false, pages: 2 },
+        { id: "11", bwv: "782", name: "Invention No. 11", keyName: "G Minor", tonic: 7, isMinor: true, pages: 2 },
+        { id: "12", bwv: "783", name: "Invention No. 12", keyName: "A Major", tonic: 9, isMinor: false, pages: 3 },
+        { id: "13", bwv: "784", name: "Invention No. 13", keyName: "A Minor", tonic: 9, isMinor: true, pages: 2 },
+        { id: "14", bwv: "785", name: "Invention No. 14", keyName: "B♭ Major", tonic: 10, isMinor: false, pages: 3 },
+        { id: "15", bwv: "786", name: "Invention No. 15", keyName: "B Minor", tonic: 11, isMinor: true, pages: 2 }
+      ];
+
+      const CHROMATIC_MAJOR = ["C", "D♭", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
+      const CHROMATIC_MINOR = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "G♯", "A", "B♭", "B"];
+
+      const MODE_NAMES = [
+        "Normal (Original)",
+        "Left Hand Inverted",
+        "Right Hand Inverted",
+        "Full Symmetrical Mirror"
+      ];
+
+      // Application State
+      let currentScoreIndex = 0;
+      let currentMode = 0;
+      let currentKeyOffset = 0;
+      let isViewingAutograph = false;
+      let isSpreadLayout = true;
+
+      // DOM Elements
+      const scoreDropdown = document.getElementById("score-dropdown");
+      const modeDropdown = document.getElementById("mode-dropdown");
+      const btnTransposeDn = document.getElementById("btn-transpose-dn");
+      const btnTransposeUp = document.getElementById("btn-transpose-up");
+      const keyDisplay = document.getElementById("key-display");
+      const btnAutographToggle = document.getElementById("btn-autograph-toggle");
+      const autographLabel = document.getElementById("autograph-label");
+      const btnLayoutToggle = document.getElementById("btn-layout-toggle");
+      const layoutLabel = document.getElementById("layout-label");
+      const scoresGrid = document.getElementById("scores-grid");
+
+      const tagInvention = document.getElementById("tag-invention");
+      const tagMode = document.getElementById("tag-mode");
+      const tagKey = document.getElementById("tag-key");
+
+      const cardPage1 = document.getElementById("card-page1");
+      const cardPage2 = document.getElementById("card-page2");
+      const cardPage3 = document.getElementById("card-page3");
+      const imgPage1 = document.getElementById("img-page1");
+      const imgPage2 = document.getElementById("img-page2");
+      const imgPage3 = document.getElementById("img-page3");
+      const headerPage1 = document.getElementById("header-page1");
+      const headerPage2 = document.getElementById("header-page2");
+      const headerPage3 = document.getElementById("header-page3");
+
+      const toast = document.getElementById("toast");
+      const toastMessage = document.getElementById("toast-message");
+
+      // Initialize UI
+      function init() {
+        populateScoreDropdown();
+        parseUrlParams();
+        attachEventListeners();
+        renderScore();
+      }
+
+      function populateScoreDropdown() {
+        scoreDropdown.innerHTML = "";
+        INVENTIONS.forEach((inv, index) => {
+          const opt = document.createElement("option");
+          opt.value = index;
+          opt.textContent = `${inv.name} in ${inv.keyName} (BWV ${inv.bwv})`;
+          scoreDropdown.appendChild(opt);
+        });
+      }
+
+      function parseUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("score")) {
+          const s = parseInt(params.get("score"), 10);
+          if (!isNaN(s) && s >= 0 && s < INVENTIONS.length) currentScoreIndex = s;
+        }
+        if (params.has("mode")) {
+          const m = parseInt(params.get("mode"), 10);
+          if (!isNaN(m) && m >= 0 && m <= 3) currentMode = m;
+        }
+        if (params.has("key")) {
+          const k = parseInt(params.get("key"), 10);
+          if (!isNaN(k) && k >= 0 && k <= 11) currentKeyOffset = k;
+        }
+        if (params.has("autograph")) {
+          isViewingAutograph = params.get("autograph") === "1";
+        }
+
+        scoreDropdown.selectedIndex = currentScoreIndex;
+        modeDropdown.value = currentMode;
+      }
+
+      function updateUrl() {
+        const params = new URLSearchParams(window.location.search);
+        params.set("score", currentScoreIndex);
+        params.set("mode", currentMode);
+        params.set("key", currentKeyOffset);
+        if (isViewingAutograph) {
+          params.set("autograph", "1");
+        } else {
+          params.delete("autograph");
+        }
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.replaceState({}, "", newUrl);
+      }
+
+      function calculateTransposedKey(scoreIndex, offset) {
+        const inv = INVENTIONS[scoreIndex];
+        const newTonic = (inv.tonic + offset) % 12;
+        const keyName = inv.isMinor ? CHROMATIC_MINOR[newTonic] : CHROMATIC_MAJOR[newTonic];
+        const modeLabel = inv.isMinor ? "Minor" : "Major";
+
+        if (offset === 0) {
+          return `${keyName} ${modeLabel} (Original)`;
+        }
+        return `${keyName} ${modeLabel} (+${offset} st)`;
+      }
+
+      function renderScore() {
+        updateUrl();
+
+        const inv = INVENTIONS[currentScoreIndex];
+        const keyNameResolved = calculateTransposedKey(currentScoreIndex, currentKeyOffset);
+
+        // Update Stepper & Badges
+        keyDisplay.textContent = keyNameResolved;
+        btnTransposeDn.disabled = currentKeyOffset <= 0;
+        btnTransposeUp.disabled = currentKeyOffset >= 11;
+
+        tagInvention.textContent = `${inv.name} (BWV ${inv.bwv})`;
+        tagMode.textContent = MODE_NAMES[currentMode];
+        tagKey.textContent = `Key: ${keyNameResolved}`;
+
+        if (isViewingAutograph) {
+          btnAutographToggle.classList.add("active");
+          autographLabel.textContent = "View Engraved Score";
+          renderAutographPages();
+        } else {
+          btnAutographToggle.classList.remove("active");
+          autographLabel.textContent = "View Autograph Manuscript";
+          renderEngravedPages();
+        }
+      }
+
+      function loadPage(cardEl, imgEl, headerEl, pageNum, totalPages, src, badgeTitle) {
+        if (!src) {
+          cardEl.hidden = true;
+          imgEl.src = "";
+          return;
+        }
+
+        cardEl.hidden = false;
+        cardEl.classList.add("loading");
+        headerEl.textContent = `Page ${pageNum} of ${totalPages}`;
+
+        imgEl.onload = function () {
+          cardEl.classList.remove("loading");
+          cardEl.hidden = false;
+        };
+
+        imgEl.onerror = function () {
+          cardEl.classList.remove("loading");
+          // If page fails (e.g. score fits on 1 page), gracefully hide the extra card
+          cardEl.hidden = true;
+          imgEl.src = "";
+        };
+
+        imgEl.src = src;
+        imgEl.alt = `${INVENTIONS[currentScoreIndex].name} - Page ${pageNum}`;
+      }
+
+      function renderEngravedPages() {
+        const inv = INVENTIONS[currentScoreIndex];
+        const prefix = `${currentMode}_`;
+        const filename = inv.id;
+        const suffix = `_${currentKeyOffset}`;
+        const basePath = `png/${prefix}${filename}${suffix}`;
+
+        // Setup badge labels
+        cardPage1.querySelector(".badge").textContent = "LilyPond Engraving";
+        cardPage2.querySelector(".badge").textContent = "LilyPond Engraving";
+        cardPage3.querySelector(".badge").textContent = "LilyPond Engraving";
+
+        const totalPages = inv.pages;
+
+        loadPage(cardPage1, imgPage1, headerPage1, 1, totalPages, `${basePath}-page1.png`);
+        loadPage(cardPage2, imgPage2, headerPage2, 2, totalPages, `${basePath}-page2.png`);
+
+        if (totalPages >= 3) {
+          loadPage(cardPage3, imgPage3, headerPage3, 3, totalPages, `${basePath}-page3.png`);
+        } else {
+          cardPage3.hidden = true;
+          imgPage3.src = "";
+        }
+      }
+
+      function renderAutographPages() {
+        const page1Num = currentScoreIndex * 2 + 1;
+        const page2Num = currentScoreIndex * 2 + 2;
+
+        cardPage1.querySelector(".badge").textContent = "Autograph Manuscript (1723)";
+        cardPage2.querySelector(".badge").textContent = "Autograph Manuscript (1723)";
+
+        loadPage(cardPage1, imgPage1, headerPage1, 1, 2, `autograph/IMSLP467846-PMLP3267-15_Inventio_Manoscritto-${page1Num}.png`);
+        loadPage(cardPage2, imgPage2, headerPage2, 2, 2, `autograph/IMSLP467846-PMLP3267-15_Inventio_Manoscritto-${page2Num}.png`);
+
+        // Autographs are exactly 2 pages; hide page 3 card
+        cardPage3.hidden = true;
+        imgPage3.src = "";
+      }
+
+      function showToast(msg) {
+        toastMessage.textContent = msg;
+        toast.classList.add("show");
+        setTimeout(() => {
+          toast.classList.remove("show");
+        }, 2500);
+      }
+
+      function openModal(id) {
+        const modal = document.getElementById(id);
+        if (modal && typeof modal.showModal === "function") {
+          modal.showModal();
+        }
+      }
+
+      function closeModal(id) {
+        const modal = document.getElementById(id);
+        if (modal && typeof modal.close === "function") {
+          modal.close();
+        }
+      }
+
+      function attachEventListeners() {
+        scoreDropdown.addEventListener("change", (e) => {
+          currentScoreIndex = parseInt(e.target.value, 10);
+          renderScore();
+        });
+
+        modeDropdown.addEventListener("change", (e) => {
+          currentMode = parseInt(e.target.value, 10);
+          renderScore();
+        });
+
+        btnTransposeUp.addEventListener("click", () => {
+          if (currentKeyOffset < 11) {
+            currentKeyOffset++;
+            renderScore();
+          }
+        });
+
+        btnTransposeDn.addEventListener("click", () => {
+          if (currentKeyOffset > 0) {
+            currentKeyOffset--;
+            renderScore();
+          }
+        });
+
+        btnAutographToggle.addEventListener("click", () => {
+          isViewingAutograph = !isViewingAutograph;
+          renderScore();
+        });
+
+        btnLayoutToggle.addEventListener("click", () => {
+          isSpreadLayout = !isSpreadLayout;
+          scoresGrid.classList.toggle("spread-layout", isSpreadLayout);
+          layoutLabel.textContent = isSpreadLayout ? "Side-by-Side Layout" : "Stacked Layout";
+        });
+
+        // Modals triggers
+        document.getElementById("btn-about").addEventListener("click", () => openModal("about-dialog"));
+        document.getElementById("btn-instructions").addEventListener("click", () => openModal("instructions-dialog"));
+        document.getElementById("btn-shortcuts").addEventListener("click", () => openModal("shortcuts-dialog"));
+
+        // Close dialog buttons
+        document.querySelectorAll("[data-close]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const targetId = btn.getAttribute("data-close");
+            closeModal(targetId);
+          });
+        });
+
+        // Light dismiss on backdrop click for all native dialogs
+        document.querySelectorAll("dialog.app-dialog").forEach((dlg) => {
+          dlg.addEventListener("click", (e) => {
+            const rect = dlg.getBoundingClientRect();
+            const isInDialog = (
+              e.clientX >= rect.left &&
+              e.clientX <= rect.right &&
+              e.clientY >= rect.top &&
+              e.clientY <= rect.bottom
+            );
+            if (!isInDialog) dlg.close();
+          });
+        });
+
+        // Share button
+        document.getElementById("btn-share").addEventListener("click", () => {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+              showToast("Link copied to clipboard!");
+            }).catch(() => {
+              showToast("Failed to copy link");
+            });
+          } else {
+            showToast("URL: " + window.location.href);
+          }
+        });
+
+        // Keyboard Shortcuts
+        window.addEventListener("keydown", (e) => {
+          // Ignore if typing inside input or select
+          if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+
+          switch (e.key) {
+            case "ArrowRight":
+            case "]":
+              if (currentScoreIndex < INVENTIONS.length - 1) {
+                currentScoreIndex++;
+                scoreDropdown.selectedIndex = currentScoreIndex;
+                renderScore();
+              }
+              break;
+            case "ArrowLeft":
+            case "[":
+              if (currentScoreIndex > 0) {
+                currentScoreIndex--;
+                scoreDropdown.selectedIndex = currentScoreIndex;
+                renderScore();
+              }
+              break;
+            case "ArrowUp":
+            case "+":
+            case "=":
+              if (currentKeyOffset < 11) {
+                currentKeyOffset++;
+                renderScore();
+              }
+              break;
+            case "ArrowDown":
+            case "-":
+            case "_":
+              if (currentKeyOffset > 0) {
+                currentKeyOffset--;
+                renderScore();
+              }
+              break;
+            case "m":
+            case "M":
+              currentMode = (currentMode + 1) % 4;
+              modeDropdown.value = currentMode;
+              renderScore();
+              break;
+            case "a":
+            case "A":
+              isViewingAutograph = !isViewingAutograph;
+              renderScore();
+              break;
+            case "l":
+            case "L":
+              btnLayoutToggle.click();
+              break;
+            case "?":
+              openModal("shortcuts-dialog");
+              break;
+          }
+        });
+      }
+
+      // Initialize on DOMContentLoaded
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </body>
 </html>
