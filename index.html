@@ -406,6 +406,12 @@
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
+    [hidden],
+    .score-card[hidden],
+    .score-card.is-hidden {
+      display: none !important;
+    }
+
     .score-card-header {
       background: #faf8f5;
       padding: 0.65rem 1rem;
@@ -808,7 +814,7 @@
         </article>
 
         <!-- Page 3 Card -->
-        <article id="card-page3" class="score-card" hidden>
+        <article id="card-page3" class="score-card is-hidden" hidden style="display: none;">
           <header class="score-card-header">
             <span id="header-page3">Page 3</span>
             <span class="badge">LilyPond Engraving</span>
@@ -1135,27 +1141,37 @@
         }
       }
 
-      function loadPage(cardEl, imgEl, headerEl, pageNum, totalPages, src, badgeTitle) {
+      function hideCard(cardEl, imgEl) {
+        cardEl.hidden = true;
+        cardEl.classList.add("is-hidden");
+        cardEl.style.setProperty("display", "none", "important");
+        cardEl.classList.remove("loading");
+        if (imgEl) imgEl.src = "";
+      }
+
+      function showCard(cardEl) {
+        cardEl.hidden = false;
+        cardEl.classList.remove("is-hidden");
+        cardEl.style.removeProperty("display");
+      }
+
+      function loadPage(cardEl, imgEl, headerEl, pageNum, totalPages, src) {
         if (!src) {
-          cardEl.hidden = true;
-          imgEl.src = "";
+          hideCard(cardEl, imgEl);
           return;
         }
 
-        cardEl.hidden = false;
-        cardEl.classList.add("loading");
         headerEl.textContent = `Page ${pageNum} of ${totalPages}`;
+        cardEl.classList.add("loading");
+        showCard(cardEl);
 
         imgEl.onload = function () {
           cardEl.classList.remove("loading");
-          cardEl.hidden = false;
+          showCard(cardEl);
         };
 
         imgEl.onerror = function () {
-          cardEl.classList.remove("loading");
-          // If page fails (e.g. score fits on 1 page), gracefully hide the extra card
-          cardEl.hidden = true;
-          imgEl.src = "";
+          hideCard(cardEl, imgEl);
         };
 
         imgEl.src = src;
@@ -1182,8 +1198,7 @@
         if (totalPages >= 3) {
           loadPage(cardPage3, imgPage3, headerPage3, 3, totalPages, `${basePath}-page3.png`);
         } else {
-          cardPage3.hidden = true;
-          imgPage3.src = "";
+          hideCard(cardPage3, imgPage3);
         }
       }
 
@@ -1197,9 +1212,7 @@
         loadPage(cardPage1, imgPage1, headerPage1, 1, 2, `autograph/IMSLP467846-PMLP3267-15_Inventio_Manoscritto-${page1Num}.png`);
         loadPage(cardPage2, imgPage2, headerPage2, 2, 2, `autograph/IMSLP467846-PMLP3267-15_Inventio_Manoscritto-${page2Num}.png`);
 
-        // Autographs are exactly 2 pages; hide page 3 card
-        cardPage3.hidden = true;
-        imgPage3.src = "";
+        hideCard(cardPage3, imgPage3);
       }
 
       function showToast(msg) {
