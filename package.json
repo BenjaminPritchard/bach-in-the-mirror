@@ -1,0 +1,10 @@
+{
+  "name": "bach-in-the-mirror",
+  "private": true,
+  "version": "2.2.0",
+  "description": "Bach in the Mirror - Symmetrically inverted scores for J.S. Bach's 15 Two-Part Inventions",
+  "scripts": {
+    "package": "./package-pages.sh",
+    "deploy": "./package-pages.sh --push"
+  }
+}
